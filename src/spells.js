@@ -52,7 +52,7 @@ export class Spells {
       m.scale.setScalar(1 / longest); // unit length, rescaled per cast
       m.position.sub(box.getCenter(new THREE.Vector3()).multiplyScalar(1 / longest));
       // Solid ghost-blue silhouette reads on a bright hall; additive light alone vanishes there.
-      const mat = new THREE.MeshBasicMaterial({ color: 0xdff4ff, transparent: true, opacity: 0.9, depthWrite: false });
+      const mat = new THREE.MeshBasicMaterial({ color: 0x8ec6ee, transparent: true, opacity: 0.8, depthWrite: false });
       m.traverse((o) => { if (o.isMesh) o.material = mat; });
       const wrap = new THREE.Group(); wrap.add(m);
       // The Tripo export from the side-view concept comes in long on x and upside down
@@ -67,6 +67,7 @@ export class Spells {
   // R sizes the effects. `hand` sizes the wand: eye height on foot, hidden on the broom.
   setScale(R, hand = null) {
     this.R = R; this.hand = hand;
+    this.gain = this.gain ?? 1; // additive effect strength; the film look (bloom) wants much less
     this.wand.visible = hand != null;
     const s = hand ?? R / 10;
     this.wand.position.set(0.16 * s, -0.12 * s, -0.28 * s);
@@ -123,7 +124,7 @@ export class Spells {
       edit.add(sdf); this.scene.add(edit);
       this.lumos = { edit, sdf, t: 0 };
     }
-    this.tipGlow.material.opacity = 1; this.light.intensity = 6;
+    this.tipGlow.material.opacity = Math.min(1, this.gain * 1.6); this.light.intensity = 6;
   }
   nox() { if (this.lumos) { this.scene.remove(this.lumos.edit); this.lumos = null; } this.tipGlow.material.opacity = 0; this.light.intensity = 0; }
 
@@ -165,13 +166,16 @@ export class Spells {
     }
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.BufferAttribute(pos, 3)); geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
-    const mat = new THREE.PointsMaterial({ size, vertexColors: true, map: glowTexture(), transparent: true, opacity: 1, depthWrite: false, blending: THREE.AdditiveBlending });
+    // Additive sparks pile up far past white in the film look's HDR buffer and bloom into a
+    // blob, so blend them normally there; bloom adds the glow back.
+    const hdr = this.gain < 1;
+    const mat = new THREE.PointsMaterial({ size: hdr ? size * 0.6 : size, vertexColors: true, map: glowTexture(), transparent: true, opacity: hdr ? 0.3 : 1, depthWrite: false, blending: hdr ? THREE.NormalBlending : THREE.AdditiveBlending });
     const pts = new THREE.Points(geo, mat); pts.renderOrder = 2; this.scene.add(pts);
     const fx = { kind: "particles", pts, vel, t: 0, life, rise, swirl, origin: origin.clone(), dir: dir.clone() };
     if (glow) {
       const edit = new SplatEdit({ rgbaBlendMode: SplatEditRgbaBlendMode.ADD_RGBA, softEdge: glow.radius });
       const c = new THREE.Color(glow.color);
-      const sdf = new SplatEditSdf({ type: SplatEditSdfType.SPHERE, radius: glow.radius * 0.5, color: c.multiplyScalar(0.6), opacity: 0 });
+      const sdf = new SplatEditSdf({ type: SplatEditSdfType.SPHERE, radius: glow.radius * 0.5, color: c.multiplyScalar(0.6 * this.gain), opacity: 0 });
       sdf.position.copy(glow.at); edit.add(sdf); this.scene.add(edit);
       fx.glow = { edit, sdf, life: glow.life, travel: glow.travel, base: sdf.color.clone() };
     }
@@ -225,7 +229,7 @@ export class Spells {
           if (f.swirl) { const s = Math.sin(f.t * 6 + i) * this.R * 0.15 * dt; x += s * f.dir.z; z -= s * f.dir.x; }
           a.array[i * 3] = x; a.array[i * 3 + 1] = y; a.array[i * 3 + 2] = z;
         }
-        a.needsUpdate = true; f.pts.material.opacity = Math.max(0, 1 - f.t / f.life);
+        a.needsUpdate = true; f.pts.material.opacity = Math.max(0, 1 - f.t / f.life) * (this.gain < 1 ? 0.3 : 1);
         if (f.glow) {
           const k = Math.sin(Math.min(1, f.t / f.glow.life) * Math.PI);
           f.glow.sdf.color.copy(f.glow.base).multiplyScalar(k);
@@ -238,7 +242,7 @@ export class Spells {
         f.m.position.y = f.y0 + Math.abs(Math.sin(f.t * 6)) * this.R * 0.012; // gallop bob
         f.m.rotation.x = Math.sin(f.t * 6) * 0.08;
         const k = f.t < 0.5 ? f.t / 0.5 : f.t > f.life - 1.2 ? Math.max(0, (f.life - f.t) / 1.2) : 1;
-        f.m.traverse((o) => { if (o.isMesh) o.material.opacity = 0.9 * k; });
+        f.m.traverse((o) => { if (o.isMesh) o.material.opacity = 0.8 * k; });
         if (f.t > f.life) { this.scene.remove(f.m); continue; }
       } else if (f.kind === "bolt") {
         f.m.position.addScaledVector(f.dir, f.speed * dt);

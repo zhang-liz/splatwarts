@@ -45,6 +45,7 @@ const dialogue = new Dialogue();
 const photo = new Photo();
 photo.onClose = () => { walker.frozen = false; broom.paused = false; music.duck(false); };
 const spells = new Spells(scene, camera, hud);
+spells.gain = post.enabled ? 0.35 : 1; // additive sparks bloom hard in linear light
 spells.targets = () => chars?.items ?? [];
 dialogue.onClose = () => { walker.frozen = false; hud.setMsg("Click to look around"); music.duck(false); if (voiceOn) spells.listen(true); };
 let voiceOn = false;

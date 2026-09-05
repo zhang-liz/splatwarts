@@ -42,6 +42,6 @@ export class Post {
   }
   resize() { this.composer.setSize(innerWidth, innerHeight); this.composer.setPixelRatio(this.renderer.getPixelRatio()); }
   // Indoors the candles bloom more; outdoors keep the sky from blowing out.
-  look(mode) { this.bloom.strength = mode === "walk" ? 0.35 : 0.2; this.bloom.threshold = mode === "walk" ? 0.7 : 0.9; }
+  look(mode) { this.bloom.strength = mode === "walk" ? 0.35 : 0.2; this.bloom.threshold = mode === "walk" ? 0.88 : 0.92; }
   render(scene, camera) { if (this.enabled) this.composer.render(); else this.renderer.render(scene, camera); }
 }
