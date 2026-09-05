@@ -251,4 +251,4 @@ renderer.setAnimationLoop(() => {
 });
 
 loadWorld(new URLSearchParams(location.search).get("world") || START);
-window.__dbg = { THREE, get world() { return world; }, get splat() { return splat; }, spark, scene, camera, broom, walker, get rings() { return rings; }, get chars() { return chars; }, dialogue, spells };
+window.__dbg = { THREE, photo, post, get world() { return world; }, get splat() { return splat; }, spark, scene, camera, broom, walker, get rings() { return rings; }, get chars() { return chars; }, dialogue, spells };

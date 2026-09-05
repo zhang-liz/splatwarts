@@ -49,15 +49,15 @@ export class Photo {
   async snap() {
     if (this.busy || !this.stream) return;
     this.busy = true; this.snapBtn.hidden = true;
+    // ask the loop for the next drawn game frame now (the overlay is DOM, not on the canvas)
+    this.frame = null; this.wantFrame = true;
     for (const n of [3, 2, 1]) { this.count.textContent = n; await new Promise((r) => setTimeout(r, 700)); }
     this.count.textContent = "";
     // webcam frame
     const c = document.createElement("canvas"); c.width = this.video.videoWidth || 1280; c.height = this.video.videoHeight || 720;
     c.getContext("2d").drawImage(this.video, 0, 0, c.width, c.height);
     const you = c.toDataURL("image/jpeg", 0.92);
-    // game frame: ask the loop for the next drawn frame (the overlay is DOM, not on the canvas)
-    this.frame = null; this.wantFrame = true;
-    for (let i = 0; i < 60 && !this.frame; i++) await new Promise((r) => setTimeout(r, 50));
+    for (let i = 0; i < 160 && !this.frame; i++) await new Promise((r) => setTimeout(r, 50));
     if (!this.frame) { this.status.textContent = "Could not grab the scene."; this.busy = false; this.snapBtn.hidden = false; return; }
     this.status.textContent = "Developing the photo…";
     const outfit = this.robes ? "Dress the person in black Hogwarts school robes with a house scarf." : "Keep the person's own clothes, face and hair exactly as they are.";
