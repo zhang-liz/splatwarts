@@ -17,6 +17,7 @@ export const WORLDS = {
   },
   hall3: {
     name: "Great Hall",
+    candles: true,
     url: "/worlds/hall3.spz",
     paged: false,
     quaternion: [1, 0, 0, 0],

@@ -9,6 +9,8 @@ import { Characters } from "./characters.js";
 import { Dialogue } from "./dialogue.js";
 import { Spells } from "./spells.js";
 import { Hud, chime, music } from "./hud.js";
+import { Post } from "./post.js";
+import { Candles } from "./candles.js";
 
 const canvas = document.getElementById("canvas");
 const hud = new Hud();
@@ -22,13 +24,14 @@ renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
 addEventListener("resize", () => {
   camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
+  renderer.setSize(innerWidth, innerHeight); post?.resize();
 });
 const spark = new SparkRenderer({ renderer, pagedExtSplats: true, coneFov0: 70, coneFov: 120, behindFoveate: 0.2, coneFoveate: 0.4 });
 scene.add(spark);
 scene.add(new THREE.HemisphereLight(0xffffff, 0x554433, 1.2));
 const sun = new THREE.DirectionalLight(0xffffff, 1.5); sun.position.set(5, 10, 2); scene.add(sun);
 
+const post = new Post(renderer, scene, camera);
 const broom = new Broom(camera, canvas);
 const walker = new Walker(camera, canvas);
 const dialogue = new Dialogue();
@@ -40,7 +43,8 @@ addEventListener("keydown", (e) => { if (e.code === "KeyV" && e.target?.tagName 
 canvas.addEventListener("click", () => { if (dialogue.open) { dialogue.close(); dialogue.onClose?.(); } canvas.requestPointerLock(); music.start(); document.getElementById("title").classList.add("gone"); document.body.classList.remove("intro"); });
 
 // ---- current world state ----
-let world = null, splat = null, rings = null, chars = null, pad = null, door = null;
+let world = null, splat = null, rings = null, chars = null, pad = null, door = null, candles = null;
+let intro = false; // camera orbits the castle until the broom is first mounted
 let mode = "fly", state = "loading", t0 = 0, elapsed = 0;
 let switching = false;
 const stage = new THREE.Group(); scene.add(stage); // everything that belongs to one world
@@ -69,7 +73,7 @@ async function loadWorld(key) {
   await new Promise((r) => setTimeout(r, 650));
   // tear down
   if (splat) { scene.remove(splat); splat.dispose?.(); splat = null; }
-  stage.clear(); rings = null; chars = null; pad = null; door = null;
+  stage.clear(); rings = null; chars = null; pad = null; door = null; candles = null; intro = false;
   dialogue.close();
   world = worldFromQuery(key);
   mode = world.mode;
@@ -107,6 +111,7 @@ function setup(R) {
     broom.setScale(R);
     broom.reset(spawnFor(course, R));
     broom.ready = true;
+    intro = !broom.enabled;
     const ground = measureFloor(splat, R);
     const p = world.pad ?? [0, (ground ?? -R * 0.3) + R * 0.05, R * 0.95];
     pad = makeDisc(0x66ccff, R * 0.1); pad.position.set(...p); stage.add(pad);
@@ -122,9 +127,11 @@ function setup(R) {
     chars = new Characters(stage, (world.characters ?? []).map((c) => ({ ...c, pos: [c.pos[0] * R, floor, c.pos[2] * R] })), R, ((world.eye ?? 0) - floor) * 1.1);
     const d = world.door ?? [0, floor, R * 0.5];
     door = makeDisc(0xffaa33, R * 0.07); door.position.set(...d); stage.add(door);
+    if (world.candles) candles = new Candles(stage, R, floor, world.eye ?? 0);
     hintEl.textContent = "WASD walk · E talk · V voice spells on/off · 1 Lumos · 2 Incendio · 3 Patronum · 4 Expelliarmus · 5 Leviosa · 6 Reducto · 0 Nox · Orange pad: broom";
   }
   spells.setScale(R, mode === "walk" ? ((world.eye ?? 0) - world.floorY) : null); spells.enabled = true; spells.nox();
+  post.look(mode);
   restart();
   fade.style.opacity = 0;
   switching = false;
@@ -172,8 +179,17 @@ renderer.setAnimationLoop(() => {
   const time = clock.elapsedTime;
   if (!switching && world) {
     if (mode === "fly") {
+      if (intro) {
+        if (broom.enabled) { intro = false; broom.reset(); }
+        else {
+          // slow orbit around the castle, looking in, until the first click
+          const R = world.radius, a = Math.PI + time * 0.1;
+          broom.rig.position.set(Math.sin(a) * R * 0.5, R * 0.12 + Math.sin(time * 0.3) * R * 0.02, Math.cos(a) * R * 0.5);
+          broom.yaw = Math.atan2(-broom.rig.position.x, -broom.rig.position.z); broom.pitch = -0.12;
+        }
+      }
       broom.update(dt);
-      if (rings) {
+      if (rings && !intro) {
         const passed = rings.update(broom.position, dt, time);
         if (passed) {
           chime(rings.next);
@@ -203,7 +219,8 @@ renderer.setAnimationLoop(() => {
     }
   }
   spells.update(dt, clock.elapsedTime);
-  renderer.render(scene, camera);
+  candles?.update(dt, camera);
+  post.render(scene, camera);
 });
 
 loadWorld(new URLSearchParams(location.search).get("world") || START);
