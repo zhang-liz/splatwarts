@@ -1,0 +1,8 @@
+node_modules/
+dist/
+public/worlds/
+*.rad
+*.spz
+*.ply
+.env
+.DS_Store

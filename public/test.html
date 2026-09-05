@@ -1,0 +1,27 @@
+<style> body {margin: 0;} </style>
+<script type="importmap">
+  {"imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/",
+    "@sparkjsdev/spark": "https://sparkjs.dev/releases/spark/2.1.0/spark.module.js"
+  }}
+</script>
+<canvas id="c" tabindex="0"></canvas>
+<script type="module">
+  import * as THREE from "three";
+  import { SparkRenderer, SplatMesh, SparkControls } from "@sparkjsdev/spark";
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color("#cafefe");
+  const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.01, 1000);
+  const renderer = new THREE.WebGLRenderer({canvas: document.getElementById("c")});
+  renderer.setSize(innerWidth, innerHeight);
+  const spark = new SparkRenderer({ renderer, pagedExtSplats: true, coneFov0: 70, coneFov: 120, behindFoveate: 0.2, coneFoveate: 0.4 });
+  scene.add(spark);
+  const world = new SplatMesh({ url: "https://storage.googleapis.com/forge-dev-public/asundqui/rad/260219/tijerin_w6_hobbiton-lod.rad", paged: true,
+    onLoad: () => console.log("TEST onLoad"), onProgress: (e) => console.log("TEST progress", e.loaded, e.total) });
+  world.quaternion.set(1,0,0,0);
+  scene.add(world);
+  const controls = new SparkControls({ canvas: renderer.domElement });
+  renderer.setAnimationLoop(() => { controls.update(camera); renderer.render(scene, camera); });
+  setTimeout(() => console.log("TEST numSplats", world.numSplats, world), 8000);
+</script>
