@@ -92,7 +92,7 @@ export class Rings {
     for (let i = 0; i < n; i++) { pos.set([at.x, at.y, at.z], i * 3); vel.push(new THREE.Vector3().randomDirection().multiplyScalar(this.R * (0.6 + Math.random()))); }
     const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
     const mat = new THREE.PointsMaterial({ color: 0xffe08a, size: this.R * 0.12, transparent: true, opacity: 1, depthWrite: false });
-    const pts = new THREE.Points(geo, mat); this.group.add(pts);
+    const pts = new THREE.Points(geo, mat); pts.renderOrder = 2; this.group.add(pts);
     this.bursts.push({ pts, vel, life: 0 });
   }
   tickBursts(dt) {
@@ -117,5 +117,6 @@ function makeLabel(text) {
   ctx.fillStyle = "#fff"; ctx.fillText(text, 64, 64);
   const tex = new THREE.CanvasTexture(c);
   const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false }));
+  sprite.renderOrder = 3;
     return sprite;
 }

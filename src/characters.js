@@ -66,6 +66,7 @@ function makeLabel(text) {
   ctx.lineWidth = 10; ctx.strokeStyle = "#000"; ctx.strokeText(text, 256, 64);
   ctx.fillStyle = "#fff"; ctx.fillText(text, 256, 64);
   const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false }));
+  sprite.renderOrder = 3;
   sprite.scale.set(4, 1, 1);
   return sprite;
 }

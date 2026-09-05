@@ -6,3 +6,5 @@ public/worlds/
 *.ply
 .env
 .DS_Store
+public/characters/raw/
+public/models/raw/

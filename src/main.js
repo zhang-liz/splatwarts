@@ -57,9 +57,9 @@ function makeDisc(color, r) {
   const ring = new THREE.Mesh(new THREE.TorusGeometry(r, r * 0.08, 12, 48), new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 1.2 }));
   ring.rotation.x = Math.PI / 2; g.add(ring);
   const disc = new THREE.Mesh(new THREE.CircleGeometry(r * 0.95, 48), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.18, side: THREE.DoubleSide }));
-  disc.rotation.x = -Math.PI / 2; g.add(disc);
+  disc.rotation.x = -Math.PI / 2; disc.renderOrder = 1; g.add(disc);
   const beam = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.9, r * 0.9, r * 2.5, 24, 1, true), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.08, side: THREE.DoubleSide, depthWrite: false }));
-  beam.position.y = r * 1.25; g.add(beam);
+  beam.position.y = r * 1.25; beam.renderOrder = 1; g.add(beam);
   return g;
 }
 
@@ -207,4 +207,4 @@ renderer.setAnimationLoop(() => {
 });
 
 loadWorld(new URLSearchParams(location.search).get("world") || START);
-window.__dbg = { get world() { return world; }, get splat() { return splat; }, spark, scene, camera, broom, walker, get rings() { return rings; }, get chars() { return chars; }, dialogue, spells };
+window.__dbg = { THREE, get world() { return world; }, get splat() { return splat; }, spark, scene, camera, broom, walker, get rings() { return rings; }, get chars() { return chars; }, dialogue, spells };

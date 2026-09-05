@@ -27,7 +27,7 @@ export class Spells {
     stick.rotation.x = -Math.PI / 2 + 0.3; stick.position.set(0, 0, -0.16); this.wand.add(stick);
     this.tip = new THREE.Object3D(); this.tip.position.set(0, 0.052, -0.33); this.wand.add(this.tip);
     this.tipGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: 0xfff2c0, transparent: true, opacity: 0, depthTest: false, blending: THREE.AdditiveBlending }));
-    this.tipGlow.scale.setScalar(0.12); this.tip.add(this.tipGlow);
+    this.tipGlow.scale.setScalar(0.12); this.tipGlow.renderOrder = 2; this.tip.add(this.tipGlow);
     this.light = new THREE.PointLight(0xffe0a0, 0, 20); this.tip.add(this.light);
     camera.add(this.wand);
     this.setScale(10);
@@ -51,11 +51,14 @@ export class Spells {
       const longest = Math.max(size.x, size.y, size.z);
       m.scale.setScalar(1 / longest); // unit length, rescaled per cast
       m.position.sub(box.getCenter(new THREE.Vector3()).multiplyScalar(1 / longest));
-      const mat = new THREE.MeshBasicMaterial({ color: 0x9fdcff, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false });
+      // Solid ghost-blue silhouette reads on a bright hall; additive light alone vanishes there.
+      const mat = new THREE.MeshBasicMaterial({ color: 0xdff4ff, transparent: true, opacity: 0.9, depthWrite: false });
       m.traverse((o) => { if (o.isMesh) o.material = mat; });
       const wrap = new THREE.Group(); wrap.add(m);
-      // Face -Z: the concept was a side view, so the long axis is x. Turn it.
-      if (size.x >= size.z) m.rotation.y = -Math.PI / 2;
+      // The Tripo export from the side-view concept comes in long on x and upside down
+      // (checked in the hall: hooves up, antlers down). Flip it and point the head down +Z,
+      // which is where the wrapper's lookAt aims.
+      if (size.x >= size.z) m.rotation.set(Math.PI, Math.PI / 2, 0);
       this.stag = wrap; this.stagMat = mat;
       console.log("Loaded stag");
     } catch (e) { console.warn("No stag", e); }
@@ -63,7 +66,7 @@ export class Spells {
 
   // R sizes the effects. `hand` sizes the wand: eye height on foot, hidden on the broom.
   setScale(R, hand = null) {
-    this.R = R;
+    this.R = R; this.hand = hand;
     this.wand.visible = hand != null;
     const s = hand ?? R / 10;
     this.wand.position.set(0.16 * s, -0.12 * s, -0.28 * s);
@@ -104,7 +107,7 @@ export class Spells {
       case "Lumos": return this.castLumos();
       case "Nox": return this.nox();
       case "Incendio": this.play("incendio"); return this.particles({ color: [0xff6a00, 0xffc400, 0xff2a00], count: 260, origin: tip, dir, speed: R * 0.5, spread: 0.18, life: 1.4, size: R * 0.035, rise: R * 0.25, glow: { color: 0xff7a1a, at: tip.clone().addScaledVector(dir, R * 0.3), radius: R * 0.2, life: 1.2 } });
-      case "Expecto Patronum": this.play("patronum"); this.patronus(tip, dir); this.particles({ color: [0x9ed8ff, 0xffffff, 0x4fb6ff], count: 700, origin: tip, dir, speed: R * 0.35, spread: 0.35, life: 3.2, size: R * 0.05, rise: R * 0.05, swirl: true, glow: { color: 0x66c2ff, at: tip.clone().addScaledVector(dir, R * 0.35), radius: R * 0.45, life: 3.0, travel: dir.clone().multiplyScalar(R * 0.12) } }); return;
+      case "Expecto Patronum": this.play("patronum"); this.patronus(tip, dir); this.particles({ color: [0x9ed8ff, 0xffffff, 0x4fb6ff], count: 320, origin: tip, dir, speed: R * 0.35, spread: 0.35, life: 3.2, size: R * 0.03, rise: R * 0.05, swirl: true, glow: { color: 0x66c2ff, at: tip.clone().addScaledVector(dir, R * 0.35), radius: R * 0.25, life: 2.5, travel: dir.clone().multiplyScalar(R * 0.12) } }); return;
       case "Expelliarmus": this.play("expelliarmus"); return this.bolt({ color: 0xff3b3b, origin: tip, dir, speed: R * 1.2, onHit: (t) => this.knockback(t, dir) });
       case "Wingardium Leviosa": this.play("leviosa"); return this.levitate(this.nearestTarget(dir));
       case "Reducto": this.play("reducto"); return this.reducto(tip.clone().addScaledVector(dir, R * 0.45));
@@ -127,12 +130,17 @@ export class Spells {
   patronus(tip, dir) {
     if (!this.stag) return;
     const s = this.stag.clone(); s.traverse((o) => { if (o.isMesh) o.material = this.stagMat.clone(); });
-    const len = this.R * 0.5;
+    // A stag is about 1.4x a person's eye height long. On the broom there is no hand; use the world size.
+    const len = (this.hand ?? this.R * 0.12) * 1.4;
     s.scale.setScalar(len);
-    s.position.copy(tip).addScaledVector(dir, len * 0.6).add(new THREE.Vector3(0, -this.R * 0.05, 0));
-    s.lookAt(s.position.clone().add(new THREE.Vector3(dir.x, 0, dir.z)));
+    const flat = new THREE.Vector3(dir.x, 0, dir.z).normalize();
+    s.position.copy(this.camera.position).addScaledVector(flat, len * 1.2);
+    // Feet on the floor when walking (camera is eye height above it); mid-air on the broom.
+    s.position.y = this.hand != null ? this.camera.position.y - this.hand + len * 0.35 : this.camera.position.y - len * 0.2;
+    s.lookAt(s.position.clone().add(flat));
+    s.traverse((o) => { o.renderOrder = 2; });
     this.scene.add(s);
-    this.fx.push({ kind: "stag", m: s, dir: dir.clone(), t: 0, life: 4.5, speed: this.R * 0.28 });
+    this.fx.push({ kind: "stag", m: s, dir: flat, y0: s.position.y, t: 0, life: 4.5, speed: this.R * 0.28 });
   }
 
   // ---- Reducto: multiply opacity to zero inside a growing sphere, then heal
@@ -158,7 +166,7 @@ export class Spells {
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.BufferAttribute(pos, 3)); geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
     const mat = new THREE.PointsMaterial({ size, vertexColors: true, map: glowTexture(), transparent: true, opacity: 1, depthWrite: false, blending: THREE.AdditiveBlending });
-    const pts = new THREE.Points(geo, mat); this.scene.add(pts);
+    const pts = new THREE.Points(geo, mat); pts.renderOrder = 2; this.scene.add(pts);
     const fx = { kind: "particles", pts, vel, t: 0, life, rise, swirl, origin: origin.clone(), dir: dir.clone() };
     if (glow) {
       const edit = new SplatEdit({ rgbaBlendMode: SplatEditRgbaBlendMode.ADD_RGBA, softEdge: glow.radius });
@@ -175,7 +183,7 @@ export class Spells {
     const m = new THREE.Mesh(new THREE.SphereGeometry(this.R * 0.02, 10, 10), new THREE.MeshBasicMaterial({ color }));
     const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color, transparent: true, depthTest: false, blending: THREE.AdditiveBlending }));
     glow.scale.setScalar(this.R * 0.14); m.add(glow);
-    m.position.copy(origin); this.scene.add(m);
+    m.position.copy(origin); m.renderOrder = 2; glow.renderOrder = 2; this.scene.add(m);
     this.fx.push({ kind: "bolt", m, dir: dir.clone(), speed, t: 0, onHit, color });
   }
 
@@ -227,10 +235,10 @@ export class Spells {
         if (f.t > f.life) { this.scene.remove(f.pts); f.pts.geometry.dispose(); if (f.glow) this.scene.remove(f.glow.edit); continue; }
       } else if (f.kind === "stag") {
         f.m.position.addScaledVector(f.dir, f.speed * dt);
-        f.m.position.y += Math.sin(f.t * 6) * this.R * 0.01; // gallop bob
+        f.m.position.y = f.y0 + Math.abs(Math.sin(f.t * 6)) * this.R * 0.012; // gallop bob
         f.m.rotation.x = Math.sin(f.t * 6) * 0.08;
         const k = f.t < 0.5 ? f.t / 0.5 : f.t > f.life - 1.2 ? Math.max(0, (f.life - f.t) / 1.2) : 1;
-        f.m.traverse((o) => { if (o.isMesh) o.material.opacity = 0.85 * k; });
+        f.m.traverse((o) => { if (o.isMesh) o.material.opacity = 0.9 * k; });
         if (f.t > f.life) { this.scene.remove(f.m); continue; }
       } else if (f.kind === "bolt") {
         f.m.position.addScaledVector(f.dir, f.speed * dt);
