@@ -25,7 +25,10 @@ He answers in his own voice. "The characters are Tripo image-to-3D models, rigge
 Turn to the wall. Say "Lumos." The stone lights up. "That is not a light. Spark is editing the splats themselves in a sphere around the wand."
 Say "Reducto." Hole in the wall, debris, heals. Say "Expecto Patronum" down the hall: the stag runs between the tables.
 
-## 1:40 Out into the alley
+## 1:35 Photo
+Press C. Webcam preview. Press Space. 3-2-1. Ten seconds later: you, standing in the Great Hall, lit by the candles. "That is Seedream compositing my webcam into the live frame." Click Save.
+
+## 1:45 Out into the alley
 Walk through the orange door at the far end. Fade. Diagon Alley at night, shop windows glowing. Say "Lumos" once on the cobbles. "Third world, same pipeline: one photo of the set, cleaned up with Seedream, into Marble." The orange pad here takes you back to the broom.
 
 ## 1:45 Roles
@@ -42,6 +45,7 @@ Walk through the orange door at the far end. Fade. Diagon Alley at night, shop w
 ## If something breaks
 - Any world: `?world=castle3`, `?world=hall3`, `?world=alley` in the URL. Add `&q=500k` on a weak laptop, `&flat=1` to drop the film look.
 - Talk box stuck: click the scene or the Walk away button.
+- Photo mode: needs camera permission once. `&robes=1` in the URL dresses you in Hogwarts robes.
 
 ## Keys
-Fly: mouse steer, W fly, Shift boost, Space stop, R restart. Walk: WASD, E talk, Esc leave. Spells: V voice toggle, 1 Lumos, 2 Incendio, 3 Patronum, 4 Expelliarmus, 5 Leviosa, 6 Reducto, 0 Nox. P prints your position.
+Fly: mouse steer, W fly, Shift boost, Space stop, R restart. Walk: WASD, E talk, Esc leave. C photo anywhere. Spells: V voice toggle, 1 Lumos, 2 Incendio, 3 Patronum, 4 Expelliarmus, 5 Leviosa, 6 Reducto, 0 Nox. P prints your position.
