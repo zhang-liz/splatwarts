@@ -32,11 +32,12 @@
     #title .cta { font-size: 20px; margin-top: 40px; opacity: 0.8; animation: blink 1.6s infinite; }
     #title .credits { position: absolute; bottom: 28px; font-size: 14px; opacity: 0.6; max-width: 80vw; }
     #title.gone { opacity: 0; }
+    body.intro #msg, body.intro #hint { visibility: hidden; }
     @keyframes blink { 50% { opacity: 0.3; } }
     #listen { position: absolute; bottom: 48px; left: 50%; transform: translateX(-50%); font-size: 15px; opacity: 0.7; color: #ffd166; font-style: italic; }
   </style>
 </head>
-<body>
+<body class="intro">
   <canvas id="canvas" tabindex="0"></canvas>
   <div id="hud">
     <div id="timer">0.00</div>

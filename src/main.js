@@ -37,7 +37,7 @@ spells.targets = () => chars?.items ?? [];
 dialogue.onClose = () => { walker.frozen = false; hud.setMsg("Click to look around"); music.duck(false); if (voiceOn) spells.listen(true); };
 let voiceOn = false;
 addEventListener("keydown", (e) => { if (e.code === "KeyV" && e.target?.tagName !== "INPUT") { voiceOn = !voiceOn; spells.listen(voiceOn); } });
-canvas.addEventListener("click", () => { canvas.requestPointerLock(); music.start(); document.getElementById("title").classList.add("gone"); });
+canvas.addEventListener("click", () => { canvas.requestPointerLock(); music.start(); document.getElementById("title").classList.add("gone"); document.body.classList.remove("intro"); });
 
 // ---- current world state ----
 let world = null, splat = null, rings = null, chars = null, pad = null, door = null;
