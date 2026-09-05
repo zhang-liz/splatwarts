@@ -3,7 +3,6 @@ import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
-import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 
 // Film look over the whole frame, splats included: soft bloom on the bright candles and
 // sky, a warm lift in the shadows, gentle contrast, and a vignette. `?flat=1` turns it off.
@@ -25,13 +24,18 @@ const GradeShader = {
 export class Post {
   constructor(renderer, scene, camera) {
     this.renderer = renderer; this.enabled = !new URLSearchParams(location.search).has("flat");
-    this.composer = new EffectComposer(renderer);
+    // Spark writes sRGB-encoded splat colours no matter the target, while three encodes
+    // meshes only when it thinks it is drawing to the screen (or an XR target). Flag the
+    // composer buffers as sRGB XR targets so meshes match the splats, and skip OutputPass
+    // so nothing is encoded twice.
+    const rt = new THREE.WebGLRenderTarget(innerWidth, innerHeight, { type: THREE.UnsignedByteType, colorSpace: THREE.SRGBColorSpace, depthBuffer: true, stencilBuffer: false });
+    this.composer = new EffectComposer(renderer, rt);
+    for (const t of [this.composer.renderTarget1, this.composer.renderTarget2]) { t.isXRRenderTarget = true; t.texture.colorSpace = THREE.SRGBColorSpace; }
     this.composer.addPass(new RenderPass(scene, camera));
     this.bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.55, 0.6, 0.82);
     this.composer.addPass(this.bloom);
     this.grade = new ShaderPass(GradeShader);
     this.composer.addPass(this.grade);
-    this.composer.addPass(new OutputPass());
     this.resize();
   }
   resize() { this.composer.setSize(innerWidth, innerHeight); this.composer.setPixelRatio(this.renderer.getPixelRatio()); }
