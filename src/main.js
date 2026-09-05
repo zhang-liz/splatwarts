@@ -246,8 +246,14 @@ renderer.setAnimationLoop(() => {
   }
   spells.update(dt, clock.elapsedTime);
   candles?.update(dt, camera);
-  post.render(scene, camera);
-  photo.grab(renderer.domElement);
+  if (photo.wantFrame) {
+    // clean plate for the photo: no wand, no low-poly figures (Seedream paints the people)
+    const wandVis = spells.wand.visible, charsVis = chars?.group.visible ?? true;
+    spells.wand.visible = false; if (chars) chars.group.visible = false;
+    post.render(scene, camera);
+    photo.grab(renderer.domElement);
+    spells.wand.visible = wandVis; if (chars) chars.group.visible = charsVis;
+  } else post.render(scene, camera);
 });
 
 loadWorld(new URLSearchParams(location.search).get("world") || START);
