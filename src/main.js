@@ -107,8 +107,11 @@ function setup(R) {
     walker.setScale(R, world.eye ?? 0);
     walker.reset({ position: [0, 0, R * 0.05], yaw: 0 });
     walker.ready = true;
-    chars = new Characters(stage, world.characters ?? [], R);
-    const d = world.door ?? [0, (world.eye ?? 0) - R * 0.06, R * 0.5];
+    // Floor: Marble puts the input camera at the origin at eye level, so the floor
+    // sits about a third of the world radius below it.
+    const floor = world.floor ?? (world.eye ?? 0) - R * 0.33;
+    chars = new Characters(stage, (world.characters ?? []).map((c) => ({ ...c, pos: [c.pos[0] * R, floor, c.pos[2] * R] })), R);
+    const d = world.door ?? [0, floor, R * 0.5];
     door = makeDisc(0xffaa33, R * 0.07); door.position.set(...d); stage.add(door);
     hintEl.textContent = "WASD: walk · Shift: run · Walk up to someone and press E to talk · Hold E to speak · Esc: stop talking · Orange pad: back to the broom";
   }

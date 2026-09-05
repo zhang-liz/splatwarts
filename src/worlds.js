@@ -23,14 +23,15 @@ export const WORLDS = {
     radius: null,
     mode: "walk",
     eye: 0,                 // Marble puts the input camera at the origin, so eye level is y=0
+    floor: null,            // y of the floor. null = eye - radius/3. Character pos are fractions of the radius.
     door: null,             // [x,y,z] exit portal. null = behind spawn. ?door=x,y,z overrides
     next: "castle2",
     characters: [
-      { name: "Harry", file: "/characters/harry.glb", pos: [-0.35, 0.28, -0.75], yaw: 0.3,
+      { name: "Harry", file: "/characters/harry.glb", pos: [-0.12, 0, -0.3], yaw: 0.3,
         persona: "You are Harry Potter, 15, brave, a little awkward, loyal. You are in the Great Hall at Hogwarts." },
-      { name: "Hermione", file: "/characters/hermione.glb", pos: [0.35, 0.28, -0.85], yaw: -0.3,
+      { name: "Hermione", file: "/characters/hermione.glb", pos: [0.12, 0, -0.34], yaw: -0.3,
         persona: "You are Hermione Granger, 15, brilliant, precise, kind but quick to correct people. You are in the Great Hall at Hogwarts." },
-      { name: "Dumbledore", file: "/characters/dumbledore.glb", pos: [0, 0.28, -1.6], yaw: 0,
+      { name: "Dumbledore", file: "/characters/dumbledore.glb", pos: [0, 0, -0.55], yaw: 0,
         persona: "You are Albus Dumbledore, headmaster, warm, wise, playful, speaks in gentle riddles. You are at the head of the Great Hall at Hogwarts." },
     ],
     credit: "World Labs Marble 1.1 Plus",
@@ -56,6 +57,8 @@ export function worldFromQuery(key) {
   const w = { key, ...(WORLDS[key] || WORLDS[START]) };
   if (q.get("r")) w.radius = Number(q.get("r"));
   for (const k of ["pad", "door"]) if (q.get(k)) w[k] = q.get(k).split(",").map(Number);
+  if (q.get("mode")) w.mode = q.get("mode");            // ?mode=walk to test on foot anywhere
+  if (w.mode === "walk" && !w.characters) w.characters = WORLDS.hall.characters;
   return w;
 }
 
