@@ -10,11 +10,19 @@
     #hud { position: fixed; inset: 0; pointer-events: none; color: #fff; text-shadow: 0 2px 8px #000; }
     #timer { position: absolute; top: 24px; left: 50%; transform: translateX(-50%); font-size: 56px; font-weight: bold; letter-spacing: 2px; }
     #rings { position: absolute; top: 96px; left: 50%; transform: translateX(-50%); font-size: 28px; }
-    #msg { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); font-size: 44px; text-align: center; line-height: 1.3; }
+    #msg { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); font-size: 44px; text-align: center; line-height: 1.3; white-space: pre-line; }
     #hint { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 16px; opacity: 0.75; text-align: center; }
     #speed { position: absolute; bottom: 20px; right: 24px; font-size: 22px; opacity: 0.85; }
     #loading { position: absolute; top: 12px; left: 16px; font-size: 14px; opacity: 0.7; }
     #crosshair { position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; margin: -3px; border-radius: 50%; background: #fff; opacity: 0.6; }
+    #fade { position: fixed; inset: 0; background: #000; opacity: 0; transition: opacity 0.6s; pointer-events: none; }
+    #talk { position: absolute; bottom: 70px; left: 50%; transform: translateX(-50%); width: min(900px, 90vw); text-align: center; }
+    #talk .who { font-size: 20px; opacity: 0.8; letter-spacing: 3px; text-transform: uppercase; }
+    #talk .line { font-size: 30px; line-height: 1.35; margin-top: 6px; background: rgba(0,0,0,0.45); padding: 12px 20px; border-radius: 10px; }
+    #talk .you { font-size: 18px; opacity: 0.7; margin-top: 8px; font-style: italic; }
+    #talk input { pointer-events: auto; margin-top: 10px; width: 70%; font: 18px Georgia, serif; padding: 8px 12px; border-radius: 8px; border: 1px solid #888; background: rgba(0,0,0,0.6); color: #fff; }
+    #talk[hidden] { display: none; }
+    .listening { color: #ffd166; }
   </style>
 </head>
 <body>
@@ -26,8 +34,15 @@
     <div id="crosshair"></div>
     <div id="speed"></div>
     <div id="loading"></div>
-    <div id="hint">Mouse: steer · W: fly / faster · S: slower · Shift: boost · Space: stop · R: restart</div>
+    <div id="talk" hidden>
+      <div class="who"></div>
+      <div class="line"></div>
+      <div class="you"></div>
+      <input type="text" placeholder="Type, or hold E and speak" />
+    </div>
+    <div id="hint"></div>
   </div>
+  <div id="fade"></div>
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>
