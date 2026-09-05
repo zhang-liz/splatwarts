@@ -52,8 +52,8 @@ function makeDisc(color, r) {
   ring.rotation.x = Math.PI / 2; g.add(ring);
   const disc = new THREE.Mesh(new THREE.CircleGeometry(r * 0.95, 48), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.18, side: THREE.DoubleSide }));
   disc.rotation.x = -Math.PI / 2; g.add(disc);
-  const beam = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.9, r * 0.9, r * 6, 24, 1, true), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.08, side: THREE.DoubleSide, depthWrite: false }));
-  beam.position.y = r * 3; g.add(beam);
+  const beam = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.9, r * 0.9, r * 2.5, 24, 1, true), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.08, side: THREE.DoubleSide, depthWrite: false }));
+  beam.position.y = r * 1.25; g.add(beam);
   return g;
 }
 

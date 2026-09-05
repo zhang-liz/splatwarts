@@ -1,6 +1,6 @@
 // Talk to a character. Hold E to speak (Chrome speech recognition), or type.
-// The dev server proxies /api/chat to OpenRouter with the key added server-side.
-const MODEL = "anthropic/claude-sonnet-5";
+// The dev server proxies /api/llm to FAL any-llm with the key added server-side.
+const MODEL = "anthropic/claude-sonnet-4.5";
 
 export class Dialogue {
   constructor() {
@@ -49,15 +49,17 @@ export class Dialogue {
     msgs.push({ role: "user", content: text });
     this.line.textContent = "…";
     try {
-      const r = await fetch("/api/chat", {
+      const transcript = msgs.map((m) => `${m.role === "user" ? "Visitor" : name}: ${m.content}`).join("\n");
+      const r = await fetch("/api/llm", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: MODEL, max_tokens: 120, temperature: 0.9,
-          messages: [{ role: "system", content: `${this.character.persona} Speak aloud, in character, 1 to 2 short sentences. Never break character. Never use stage directions or asterisks.` }, ...msgs],
+          model: MODEL,
+          system_prompt: `${this.character.persona} Speak aloud, in character, 1 to 2 short sentences. Never break character. No stage directions, no asterisks, no name prefix.`,
+          prompt: `${transcript}\n${name}:`,
         }),
       });
       const j = await r.json();
-      const reply = j.choices?.[0]?.message?.content?.trim() || "(silence)";
+      const reply = (j.output || "").trim().replace(/^\**\w+:\**\s*/, "") || "(silence)";
       msgs.push({ role: "assistant", content: reply });
       this.history.set(name, msgs.slice(-12));
       this.line.textContent = reply;

@@ -1,8 +1,8 @@
 import { defineConfig } from "vite";
 import fs from "node:fs";
 
-// Keys live in .env as `name=value`. The dev server injects the OpenRouter key
-// into /api/chat so the browser never sees it.
+// Keys live in .env as `name=value`. The dev server injects the FAL key
+// into /api/llm so the browser never sees it.
 function envKey(name) {
   try {
     const line = fs.readFileSync(".env", "utf8").split("\n").find((l) => l.startsWith(name + "="));
@@ -16,11 +16,11 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      "/api/chat": {
-        target: "https://openrouter.ai",
+      "/api/llm": {
+        target: "https://fal.run",
         changeOrigin: true,
-        rewrite: () => "/api/v1/chat/completions",
-        headers: { Authorization: `Bearer ${envKey("openrouter-api-key")}` },
+        rewrite: () => "/fal-ai/any-llm",
+        headers: { Authorization: `Key ${envKey("fal-api-key")}` },
       },
     },
   },
