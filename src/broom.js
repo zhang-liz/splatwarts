@@ -67,7 +67,7 @@ export class Broom {
       const longest = Math.max(size.x, size.y, size.z);
       m.scale.setScalar(2.2 / longest);
       if (size.y === longest) m.rotation.x = -Math.PI / 2;
-      else if (size.x === longest) m.rotation.y = Math.PI / 2;
+      else if (size.x === longest) m.rotation.y = -Math.PI / 2;
       const wrap = new THREE.Group(); wrap.add(m);
       this.pitchNode.remove(this.mesh);
       this.mesh = wrap;
