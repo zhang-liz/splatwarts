@@ -26,7 +26,7 @@ import json, sys, urllib.request
 name = sys.argv[1]
 d = json.load(open(f"public/worlds/{name}.json"))
 resp = d.get("response", d)
-if "error" in d: print("ERROR", d["error"]); sys.exit(1)
+if d.get("error"): print("ERROR", d["error"]); sys.exit(1)
 assets = resp.get("assets", {})
 spz = assets.get("splats", {}).get("spz_urls", {})
 url = spz.get("full_res") or spz.get("500k") or next(iter(spz.values()), None)

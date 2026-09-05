@@ -1,11 +1,12 @@
 import * as THREE from "three";
 
-const RING_RADIUS = 2.5;
-const TUBE = 0.18;
+
 
 export class Rings {
-  constructor(scene, course) {
+  constructor(scene, course, ringRadius = 2.5) {
     this.scene = scene;
+    this.R = ringRadius;
+    this.tube = ringRadius * 0.07;
     this.group = new THREE.Group();
     scene.add(this.group);
     this.rings = course.map((c, i) => this.makeRing(c, i));
@@ -14,7 +15,7 @@ export class Rings {
   }
 
   makeRing({ position, normal }, index) {
-    const geo = new THREE.TorusGeometry(RING_RADIUS, TUBE, 16, 48);
+    const geo = new THREE.TorusGeometry(this.R, this.tube, 16, 48);
     const mat = new THREE.MeshStandardMaterial({
       color: 0xffc23a, emissive: 0xffa500, emissiveIntensity: 0.6, roughness: 0.4, metalness: 0.3,
     });
@@ -23,7 +24,8 @@ export class Rings {
     mesh.lookAt(position.clone().add(normal));
     // Number label sprite
     const label = makeLabel(String(index + 1));
-    label.position.set(0, RING_RADIUS + 0.9, 0);
+    label.position.set(0, this.R * 1.35, 0);
+    label.scale.setScalar(this.R * 0.6);
     mesh.add(label);
     this.group.add(mesh);
     return { mesh, position, normal, passed: false, label };
@@ -66,7 +68,7 @@ export class Rings {
     const side = Math.sign(rel.dot(r.normal));
     const lateral = rel.clone().addScaledVector(r.normal, -rel.dot(r.normal)).length();
     let passed = false;
-    if (this.lastSide !== null && side !== this.lastSide && lateral < RING_RADIUS) {
+    if (this.lastSide !== null && side !== this.lastSide && lateral < this.R) {
       passed = true;
       r.passed = true;
       r.mesh.material.color.set(0x6cff8a);
@@ -95,6 +97,5 @@ function makeLabel(text) {
   ctx.fillStyle = "#fff"; ctx.fillText(text, 64, 64);
   const tex = new THREE.CanvasTexture(c);
   const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false }));
-  sprite.scale.setScalar(1.6);
-  return sprite;
+    return sprite;
 }

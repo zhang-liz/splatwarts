@@ -1,27 +1,27 @@
 import * as THREE from "three";
 
-// Ring course. Positions are relative to the world spawn, in world units.
-// Auto course: a gentle S curve ahead of spawn. Replace with hand-placed
-// [x, y, z] triples once you know the world (press P to print positions).
-export function buildCourse(spawn, count = 10, spacing = 14) {
+// A lap around the world center: rings on a circle at 55% of the flight
+// radius, heights rising and falling, each ring facing along the lap.
+export function buildCourse(R, count = 10) {
+  const r = R * 0.55;
   const out = [];
-  const origin = new THREE.Vector3(...spawn.position);
-  const forward = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), spawn.yaw);
-  const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
   for (let i = 0; i < count; i++) {
-    const t = i + 1;
-    const p = origin.clone()
-      .addScaledVector(forward, t * spacing)
-      .addScaledVector(right, Math.sin(t * 0.7) * spacing * 0.6)
-      .add(new THREE.Vector3(0, Math.sin(t * 0.5) * 3 + 1, 0));
-    // Ring faces the previous point so you fly through it head-on.
-    const prev = i === 0 ? origin : out[i - 1].position;
-    const normal = p.clone().sub(prev).normalize();
-    out.push({ position: p, normal });
+    const a = (i / count) * Math.PI * 2;
+    const p = new THREE.Vector3(Math.cos(a) * r, Math.sin(a * 2) * R * 0.15, Math.sin(a) * r);
+    const tangent = new THREE.Vector3(-Math.sin(a), 0, Math.cos(a)).normalize();
+    out.push({ position: p, normal: tangent });
   }
   return out;
 }
 
-// Hand-placed course goes here when ready. Return null to use the auto course.
-// Example: [[x,y,z], [x,y,z], ...]
+// Spawn a bit behind ring 1, facing it.
+export function spawnFor(course, R) {
+  const first = course[0];
+  const back = first.position.clone().addScaledVector(first.normal, -R * 0.25);
+  const yaw = Math.atan2(-(first.position.x - back.x), -(first.position.z - back.z));
+  return { position: [back.x, back.y, back.z], yaw, pitch: 0 };
+}
+
+// Hand-placed course goes here when ready. Return null to use the lap.
+// Example: [[x,y,z], [x,y,z], ...]  (press P in game to print positions)
 export const HAND_COURSE = null;
