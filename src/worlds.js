@@ -3,6 +3,33 @@ import * as THREE from "three";
 // inside `radius` (world units, auto-measured when null).
 // mode: "fly" = broom race with rings and a landing pad. "walk" = on foot with characters.
 export const WORLDS = {
+  castle3: {
+    name: "Hogwarts",
+    url: "/worlds/castle3.spz",
+    paged: false,
+    quaternion: [1, 0, 0, 0],
+    background: "#1a1a2e",
+    radius: null,
+    mode: "fly",
+    pad: null,
+    next: "hall3",
+    credit: "Marble 1.1 Plus from a photo of the film's castle model",
+  },
+  hall3: {
+    name: "Great Hall",
+    url: "/worlds/hall3.spz",
+    paged: false,
+    quaternion: [1, 0, 0, 0],
+    background: "#0b0a14",
+    radius: null,
+    mode: "walk",
+    eye: 0,
+    floor: null,
+    door: null,
+    next: "castle3",
+    characters: null,       // filled from hall below
+    credit: "Marble 1.1 Plus from a photo of the film's Great Hall set",
+  },
   castle2: {
     name: "Castle",
     url: "/worlds/castle2.spz",
@@ -50,7 +77,8 @@ export const WORLDS = {
   },
 };
 
-export const START = "castle2";
+WORLDS.hall3.characters = WORLDS.hall.characters;
+export const START = "castle3";
 
 // ?world=hall picks a world. ?r=20 overrides the radius. ?pad=x,y,z and ?door=x,y,z override spots.
 export function worldFromQuery(key) {

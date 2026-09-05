@@ -26,7 +26,7 @@ export class Spells {
     stick.rotation.x = -Math.PI / 2 + 0.25; stick.position.set(0, 0, -0.18); this.wand.add(stick);
     this.tip = new THREE.Object3D(); this.tip.position.set(0, 0.05, -0.39); this.wand.add(this.tip);
     this.tipGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: 0xfff2c0, transparent: true, opacity: 0, depthTest: false, blending: THREE.AdditiveBlending }));
-    this.tipGlow.scale.setScalar(0.25); this.tip.add(this.tipGlow);
+    this.tipGlow.scale.setScalar(0.12); this.tip.add(this.tipGlow);
     this.light = new THREE.PointLight(0xffe0a0, 0, 20); this.tip.add(this.light);
     camera.add(this.wand);
     this.setScale(10);
@@ -167,7 +167,7 @@ export class Spells {
   update(dt, time) {
     if (this.lumos) {
       this.lumos.sdf.position.copy(this.tipWorld());
-      const f = 1 + Math.sin(time * 9) * 0.06; this.tipGlow.scale.setScalar(0.25 * f); this.light.intensity = 4 * f;
+      const f = 1 + Math.sin(time * 9) * 0.06; this.tipGlow.scale.setScalar(0.12 * f); this.light.intensity = 4 * f;
     }
     if (this.shake > 0) { this.shake -= dt; const k = this.shake * this.R * 0.004; this.camera.position.x += (Math.random() - 0.5) * k; this.camera.position.y += (Math.random() - 0.5) * k; }
     const keep = [];
