@@ -10,7 +10,8 @@ export class Dialogue {
     this.you = this.box.querySelector(".you");
     this.input = this.box.querySelector("input");
     this.history = new Map(); // name -> messages
-    this.character = null; this.busy = false; this.listening = false;
+    this.character = null; this.busy = false; this.listening = false; this.speaking = false;
+    this.box.querySelector(".leave").addEventListener("click", () => { this.close(); this.onClose?.(); });
     this.rec = null;
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SR) {
@@ -38,7 +39,7 @@ export class Dialogue {
     this.line.textContent = this.history.has(character.name) ? "…" : "";
     if (!this.history.has(character.name)) this.send("(The visitor walks up to you. Greet them in one short line.)", true);
   }
-  close() { this.character = null; this.box.hidden = true; window.speechSynthesis?.cancel(); this.audio?.pause(); this.input.value = ""; this.input.blur(); }
+  close() { this.character = null; this.box.hidden = true; this.speaking = false; window.speechSynthesis?.cancel(); this.audio?.pause(); this.input.value = ""; this.input.blur(); }
   listen(on) {
     if (!this.rec || !this.character || this.busy) return;
     if (on && !this.listening) { try { this.rec.start(); this.listening = true; this.who.classList.add("listening"); this.you.textContent = "listening…"; } catch {} }
@@ -80,6 +81,8 @@ export class Dialogue {
       const j = await r.json();
       if (!j.audio?.url) throw new Error("no audio");
       this.audio = new Audio(j.audio.url);
+      this.audio.onended = this.audio.onpause = () => { this.speaking = false; };
+      this.speaking = true;
       await this.audio.play();
     } catch (e) {
       console.warn("TTS fallback", e);
@@ -87,6 +90,7 @@ export class Dialogue {
       synth.cancel();
       const u = new SpeechSynthesisUtterance(text);
       if (name === "Dumbledore") { u.pitch = 0.7; u.rate = 0.88; } else if (name === "Hermione") { u.pitch = 1.15; u.rate = 1.08; }
+      this.speaking = true; u.onend = u.onerror = () => { this.speaking = false; };
       synth.speak(u);
     }
   }

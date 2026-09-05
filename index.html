@@ -21,6 +21,8 @@
     #talk .line { font-size: 30px; line-height: 1.35; margin-top: 6px; background: rgba(0,0,0,0.45); padding: 12px 20px; border-radius: 10px; }
     #talk .you { font-size: 18px; opacity: 0.7; margin-top: 8px; font-style: italic; }
     #talk input { pointer-events: auto; margin-top: 10px; width: 70%; font: 18px Georgia, serif; padding: 8px 12px; border-radius: 8px; border: 1px solid #888; background: rgba(0,0,0,0.6); color: #fff; }
+    #talk .leave { pointer-events: auto; display: block; margin: 10px auto 0; font: 15px Georgia, serif; padding: 6px 14px; border-radius: 8px; border: 1px solid #888; background: rgba(0,0,0,0.5); color: #ddd; cursor: pointer; }
+    #talk .leave:hover { background: rgba(255,255,255,0.15); }
     #talk[hidden] { display: none; }
     .listening { color: #ffd166; }
     #spell { position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%); font-size: 64px; letter-spacing: 6px; font-weight: bold; color: #ffe9a8; text-shadow: 0 0 24px #ffb84d, 0 2px 8px #000; opacity: 0; }
@@ -51,6 +53,7 @@
       <div class="line"></div>
       <div class="you"></div>
       <input type="text" placeholder="Type, or hold E and speak" />
+      <button class="leave">Walk away (Esc)</button>
     </div>
     <div id="spell"></div>
     <div id="listen"></div>

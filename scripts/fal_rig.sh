@@ -17,5 +17,5 @@ done
 R=$(curl -sS "$resp_url" -H "Authorization: Key $FAL"); echo "$R" > "public/characters/raw/$NAME-rig$ANIM.json"
 A=$(echo "$R" | python3 -c 'import sys,json; d=json.load(sys.stdin); print((d.get("animation_glb") or d.get("rigged_character_glb") or {}).get("url",""))')
 curl -sSL "$A" -o "public/characters/raw/$NAME-anim$ANIM.glb"
-scripts/shrink_glb.sh "public/characters/raw/$NAME-anim$ANIM.glb" "public/characters/$NAME.glb"
-echo "READY $NAME $(stat -f%z public/characters/$NAME.glb) bytes"
+OUT="${OUT:-public/characters/$NAME-a$ANIM.glb}"; scripts/shrink_glb.sh "public/characters/raw/$NAME-anim$ANIM.glb" "$OUT"
+echo "READY $NAME $(stat -f%z "$OUT") bytes"

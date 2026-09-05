@@ -1,24 +1,34 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-// Characters standing in a world. Each is a GLB (Tripo export, rigged, with
-// an idle clip) or a placeholder capsule until the GLB exists.
+// Characters living in a world. Each is a Tripo mesh rigged on Meshy, plus extra Meshy
+// clips (one GLB per clip, same rig) for what they do on their own, a wave hello, and
+// talking. Until the GLB exists they are a placeholder capsule.
+//
+// States: "ambient" (busy with their own thing) -> player walks up: "greet" (wave once, turn
+// to face) -> "attend" (relaxed, facing the player) <-> "talk" (while their voice line plays).
+const CLIPS = {
+  Harry: { ambient: 129, talk: 313, wave: 290 },       // practising a spell
+  Hermione: { ambient: 36, talk: 309, wave: 290 },     // puzzling over something
+  Dumbledore: { ambient: 11, talk: 308, wave: 290 },   // calm idle
+};
+const clipUrl = (name, id) => `/characters/${name.toLowerCase()}-a${id}.glb`;
+
 export class Characters {
   constructor(scene, list, R, height) {
     this.scene = scene; this.group = new THREE.Group(); scene.add(this.group);
     this.R = R; this.height = height ?? R * 0.36;
     this.items = list.map((c) => this.spawn(c));
-    this.near = null;
+    this.near = null; this.t = 0;
   }
   spawn(c) {
     const root = new THREE.Group();
     root.position.set(...c.pos); root.rotation.y = c.yaw ?? 0;
-    const h = this.height; // character height in world units
+    const h = this.height;
     const body = new THREE.Mesh(new THREE.CapsuleGeometry(h * 0.16, h * 0.55, 6, 12), new THREE.MeshStandardMaterial({ color: c.color ?? 0x7a5cff, roughness: 0.6 }));
     body.position.y = h * 0.45; root.add(body);
-    const label = makeLabel(c.name); label.position.y = h * 1.15; label.scale.setScalar(h * 0.5); root.add(label);
     this.group.add(root);
-    const item = { ...c, root, body, label, h };
+    const item = { ...c, root, body, h, state: "ambient", clips: {}, action: null, stateT: 0 };
     this.load(item);
     return item;
   }
@@ -26,52 +36,79 @@ export class Characters {
     try {
       const head = await fetch(item.file, { method: "HEAD" });
       if (!head.ok || !(head.headers.get("content-type") || "").includes("model")) return;
-      const gltf = await new GLTFLoader().loadAsync(item.file);
+      const loader = new GLTFLoader();
+      const gltf = await loader.loadAsync(item.file);
       const m = gltf.scene;
       const box = new THREE.Box3().setFromObject(m);
       const size = box.getSize(new THREE.Vector3());
       const s = item.h / size.y; m.scale.setScalar(s);
       m.position.y = -box.min.y * s;
       item.root.remove(item.body); item.root.add(m); item.model = m;
-      // Meshy's animation presets swing the arms about, and the auto-rig stretches the robes
-      // with them. Stand in the bind pose instead, lower the arms, and breathe a little.
       item.pose = relaxedPose(m);
-      console.log("Loaded character", item.name, item.pose ? "posed" : "no skeleton", gltf.animations?.map((a) => a.name));
+      item.mixer = new THREE.AnimationMixer(m);
+      console.log("Loaded character", item.name);
+      // Extra clips share the rig, so they retarget by bone name onto this model.
+      const ids = CLIPS[item.name] || {};
+      await Promise.all(Object.entries(ids).map(async ([key, id]) => {
+        try {
+          const url = clipUrl(item.name, id);
+          const h2 = await fetch(url, { method: "HEAD" });
+          if (!h2.ok || !(h2.headers.get("content-type") || "").includes("model")) return;
+          const g = await loader.loadAsync(url);
+          if (g.animations?.[0]) item.clips[key] = g.animations[0];
+        } catch (e) { console.warn("clip failed", item.name, key, e); }
+      }));
+      console.log("Clips", item.name, Object.keys(item.clips));
+      this.enter(item, "ambient");
     } catch (e) { console.warn("Character load failed", item.name, e); }
   }
-  // Face the player, tick animations, find who is close enough to talk to.
-  update(dt, playerPos) {
-    this.t = (this.t ?? 0) + dt;
-    for (const it of this.items) if (it.pose) breathe(it.pose, this.t + it.root.position.x * 7);
+  // Switch state. Clip states fade in from the relaxed pose; "attend" fades everything out.
+  enter(item, state) {
+    if (item.state === state) return;
+    item.state = state; item.stateT = 0;
+    if (!item.mixer) return;
+    const clip = item.clips[state === "greet" ? "wave" : state];
+    if (item.action) { item.action.fadeOut(0.35); item.action = null; }
+    if (clip) {
+      const a = item.mixer.clipAction(clip);
+      a.reset().setLoop(state === "greet" ? THREE.LoopOnce : THREE.LoopRepeat, Infinity).fadeIn(0.35).play();
+      a.clampWhenFinished = true;
+      item.action = a;
+    }
+  }
+  // Face the player when near, run the state machine, tick animations.
+  // talkingTo: name of the character in conversation, speaking: their voice line is playing.
+  update(dt, playerPos, talkingTo = null, speaking = false) {
+    this.t += dt;
     let best = null, bestD = this.R * 0.14;
     for (const it of this.items) {
+      it.stateT += dt;
       const d = Math.hypot(it.root.position.x - playerPos.x, it.root.position.z - playerPos.z);
-      if (d < this.R * 0.5) {
+      const close = d < this.R * 0.3;
+      if (close) {
         const target = Math.atan2(playerPos.x - it.root.position.x, playerPos.z - it.root.position.z);
         let diff = target - it.root.rotation.y; diff = Math.atan2(Math.sin(diff), Math.cos(diff));
-        it.root.rotation.y += diff * Math.min(1, dt * 3);
+        it.root.rotation.y += diff * Math.min(1, dt * 4);
       }
       if (d < bestD) { best = it; bestD = d; }
+      // state machine
+      if (talkingTo === it.name) this.enter(it, speaking ? "talk" : "attend");
+      else if (close) {
+        if (it.state === "ambient") this.enter(it, it.clips.wave ? "greet" : "attend");
+        else if (it.state === "greet" && it.stateT > (it.clips.wave?.duration ?? 1.5) - 0.3) this.enter(it, "attend");
+        else if (it.state === "talk") this.enter(it, "attend");
+      } else if (it.state !== "ambient" && it.stateT > 1.5) this.enter(it, "ambient");
+      // relaxed pose underneath: bones not driven by a clip drift back to it and breathe
+      if (it.pose && (it.state === "attend" || !it.action)) settle(it.pose, dt, this.t + it.root.position.x * 7);
+      it.mixer?.update(dt);
     }
     this.near = best;
     return best;
   }
 }
 
-function makeLabel(text) {
-  const c = document.createElement("canvas"); c.width = 512; c.height = 128;
-  const ctx = c.getContext("2d");
-  ctx.font = "bold 72px Georgia"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  ctx.lineWidth = 10; ctx.strokeStyle = "#000"; ctx.strokeText(text, 256, 64);
-  ctx.fillStyle = "#fff"; ctx.fillText(text, 256, 64);
-  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false }));
-  sprite.renderOrder = 3;
-  sprite.scale.set(4, 1, 1);
-  return sprite;
-}
-
-// Put a Mixamo-named skeleton in its bind pose, then swing each upper arm down to hang
-// at the side. Returns the bones we keep moving, or null when there is no skeleton.
+// Read a Mixamo-named rig, swing each upper arm down to hang at the side, and remember that
+// pose. Returns the bones we keep moving, or null when there is no skeleton.
 function relaxedPose(model) {
   let skinned = null;
   model.traverse((o) => { if (o.isSkinnedMesh && !skinned) skinned = o; });
@@ -90,22 +127,19 @@ function relaxedPose(model) {
     const want = new THREE.Vector3(Math.sign(now.x) * 0.18, -1, 0.05).normalize(); // hang down, a touch out and forward
     const turn = new THREE.Quaternion().setFromUnitVectors(now, want);
     const parentQ = arm.parent.getWorldQuaternion(new THREE.Quaternion());
-    // world-space turn expressed in the parent's frame, applied on top of the local rotation
     arm.quaternion.premultiply(parentQ.clone().invert().multiply(turn).multiply(parentQ));
-    arms.push({ bone: arm, base: arm.quaternion.clone(), sign: Math.sign(now.x) });
+    arms.push({ bone: arm, sign: Math.sign(now.x) });
   }
+  const rest = new Map();
+  model.traverse((o) => { if (o.isBone) rest.set(o, o.quaternion.clone()); });
   const spine = model.getObjectByName("Spine02") || model.getObjectByName("Spine");
-  return { arms, spine, spineBase: spine ? spine.quaternion.clone() : null };
+  return { arms, spine, rest };
 }
 
-function breathe(pose, t) {
-  const q = new THREE.Quaternion();
-  if (pose.spine) {
-    q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.sin(t * 1.6) * 0.02);
-    pose.spine.quaternion.copy(pose.spineBase).multiply(q);
-  }
-  for (const a of pose.arms) {
-    q.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.sin(t * 1.6 + 1) * 0.02 * a.sign);
-    a.bone.quaternion.copy(a.base).multiply(q);
-  }
+// Ease every bone toward the relaxed pose, then add a small breath.
+function settle(pose, dt, t) {
+  const k = Math.min(1, dt * 5), q = new THREE.Quaternion();
+  for (const [bone, rq] of pose.rest) bone.quaternion.slerp(rq, k);
+  if (pose.spine) { q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.sin(t * 1.6) * 0.02); pose.spine.quaternion.multiply(q); }
+  for (const a of pose.arms) { q.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.sin(t * 1.6 + 1) * 0.02 * a.sign); a.bone.quaternion.multiply(q); }
 }

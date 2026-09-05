@@ -37,7 +37,7 @@ spells.targets = () => chars?.items ?? [];
 dialogue.onClose = () => { walker.frozen = false; hud.setMsg("Click to look around"); music.duck(false); if (voiceOn) spells.listen(true); };
 let voiceOn = false;
 addEventListener("keydown", (e) => { if (e.code === "KeyV" && e.target?.tagName !== "INPUT") { voiceOn = !voiceOn; spells.listen(voiceOn); } });
-canvas.addEventListener("click", () => { canvas.requestPointerLock(); music.start(); document.getElementById("title").classList.add("gone"); document.body.classList.remove("intro"); });
+canvas.addEventListener("click", () => { if (dialogue.open) { dialogue.close(); dialogue.onClose?.(); } canvas.requestPointerLock(); music.start(); document.getElementById("title").classList.add("gone"); document.body.classList.remove("intro"); });
 
 // ---- current world state ----
 let world = null, splat = null, rings = null, chars = null, pad = null, door = null;
@@ -192,7 +192,7 @@ renderer.setAnimationLoop(() => {
     } else {
       walker.update(dt);
       if (chars) {
-        const near = chars.update(dt, walker.position);
+        const near = chars.update(dt, walker.position, dialogue.character?.name ?? null, dialogue.speaking);
         if (!dialogue.open) hud.setMsg(near ? `Press E to talk to ${near.name}` : "");
       }
       if (door) {
