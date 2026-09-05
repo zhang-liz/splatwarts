@@ -93,14 +93,15 @@ export function worldFromQuery(key) {
   return w;
 }
 
-// Measure how big the loaded splat is: 70th percentile distance from origin.
+// Measure the world's core: median distance from origin. Sky and far hills
+// sit in the long tail and must not set the scale.
 export function measureRadius(splat) {
   const d = [];
   let i = 0;
   splat.forEachSplat((_, center) => { if (i++ % 50 === 0) d.push(center.length()); });
   if (d.length < 100) return null;
   d.sort((a, b) => a - b);
-  return d[Math.floor(d.length * 0.7)];
+  return d[Math.floor(d.length * 0.5)];
 }
 
 // Measure the floor: the lowest splats right under the camera. Centers come

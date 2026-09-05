@@ -103,13 +103,13 @@ function setup(R) {
       const prev = i === 0 ? new THREE.Vector3() : new THREE.Vector3(...arr[i - 1]);
       return { position, normal: position.clone().sub(prev).normalize() };
     }) : buildCourse(R);
-    rings = new Rings(stage, course, R / 22);
+    rings = new Rings(stage, course, R * 0.12);
     broom.setScale(R);
     broom.reset(spawnFor(course, R));
     broom.ready = true;
     const ground = measureFloor(splat, R);
-    const p = world.pad ?? [0, (ground ?? -R * 0.3) + R * 0.04, R * 0.1];
-    pad = makeDisc(0x66ccff, R * 0.06); pad.position.set(...p); stage.add(pad);
+    const p = world.pad ?? [0, (ground ?? -R * 0.3) + R * 0.05, R * 0.95];
+    pad = makeDisc(0x66ccff, R * 0.1); pad.position.set(...p); stage.add(pad);
     hintEl.textContent = "Mouse steer · W fly · Shift boost · Space stop · R restart · V voice spells · 1-6 spells · Land on the blue pad to enter the castle";
   } else {
     walker.setScale(R, world.eye ?? 0);
@@ -187,7 +187,7 @@ renderer.setAnimationLoop(() => {
       if (pad) {
         pad.rotation.y += dt * 0.5;
         const R = world.radius;
-        if (broom.ready && broom.position.distanceTo(pad.position) < R * 0.07) { hud.setMsg("Landing…"); loadWorld(world.next); }
+        if (broom.ready && broom.position.distanceTo(pad.position) < R * 0.13) { hud.setMsg("Landing…"); loadWorld(world.next); }
       }
     } else {
       walker.update(dt);

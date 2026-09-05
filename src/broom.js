@@ -45,10 +45,10 @@ export class Broom {
   // Everything is sized from the flight radius so any world feels right.
   setScale(R) {
     this.bounds = R;
-    this.baseSpeed = R * 0.12;
-    this.maxSpeed = R * 0.28;
+    this.baseSpeed = R * 0.22;
+    this.maxSpeed = R * 0.45;
     this.boost = 1.6;
-    const s = R / 20;
+    const s = R / 8;
     this.camera.position.set(0, 0.6 * s, 1.6 * s);
     this.mesh.scale.setScalar(s);
     this.mesh.position.set(0, -0.35 * s, 0);
@@ -110,7 +110,7 @@ export class Broom {
     this.rig.position.addScaledVector(dir, this.speed * dt);
     // Soft wall: clamp to the bubble and nudge the nose back toward the center.
     const d = this.rig.position.length();
-    const lim = this.bounds * 0.4;
+    const lim = this.bounds * 1.25;
     this.outside = d > lim * 0.9;
     if (d > lim) {
       this.rig.position.multiplyScalar(lim / d);
