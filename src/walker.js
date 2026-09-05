@@ -45,7 +45,7 @@ export class Walker {
     const s = this.speed * ((k.has("ShiftLeft") || k.has("ShiftRight")) ? 2 : 1);
     this.rig.position.addScaledVector(v, s * dt);
     const flat = new THREE.Vector2(this.rig.position.x, this.rig.position.z);
-    if (flat.length() > this.bounds * 0.8) { flat.setLength(this.bounds * 0.8); this.rig.position.x = flat.x; this.rig.position.z = flat.y; }
+    if (flat.length() > this.bounds * 0.45) { flat.setLength(this.bounds * 0.45); this.rig.position.x = flat.x; this.rig.position.z = flat.y; }
     this.rig.position.y = this.eye;
   }
   get position() { return this.rig.position; }
