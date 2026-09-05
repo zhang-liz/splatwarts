@@ -1,51 +1,53 @@
 # Splatwarts — 2-minute demo
 
-Track: Gaming & Interactive Worlds. Loop: fly, land, walk, talk, cast, walk out into Diagon Alley.
+Track: Creative 3D & VFX. Pitch: one photo of a film set becomes a walkable 3D set with a cinema lens, and a real person can be composited into any shot in ten seconds.
 
 ## Before going on stage
-- `npm run dev` running. Open `http://localhost:5173/` in Chrome. Mic allowed.
-- Click once (pointer lock + music). Press V (voice spells on).
+- `npm run dev` running. Open `http://localhost:5173/` in Chrome. Camera and mic allowed.
+- Have your own photo ready in a folder (or use the webcam).
 - Fallback recording on the desktop, ready to play.
 
 ## 0:00 State it
 Let the title sit for 3 seconds: the camera is already pushing toward the castle.
-"Splatwarts. A wizard school you can fly around, land in, walk through, and talk to. Every world is a Gaussian splat from Marble, built from photos of the real film miniature and the real sets."
+"Splatwarts. Virtual production from one photograph. This castle is a photo of the film miniature. Marble turned it into a 3D set. Everything you see is a Gaussian splat with a cinema lens on it."
 
-## 0:15 Fly
-Press W. Fly through 3 rings. Say "the rings are placed from the world's own measured size, so any Marble world becomes a course."
+## 0:15 Camera move
+Press W. One smooth pass around the castle, through a ring or two, no racing.
+"This is a camera move through the set, not a video. Any Marble world becomes a set you can shoot from any angle."
 
-## 0:40 Land
-Dive to the blue pad. Fade. "Two worlds, one landing."
+## 0:40 Cut to the hall
+Dive to the blue pad. Fade. Look up.
+"The Great Hall, from a photo of the real set. The floating candles, the depth of field, the bloom and the film grade are all live. Spark renders the splats, Three.js does the lens."
 
-## 0:50 Talk
-Look up: floating candles. Walk to Dumbledore. Press E. Say: "Professor, what should I never do in this hall?"
-He answers in his own voice. "The characters are Tripo image-to-3D models, rigged in Tripo. The voice is Claude answering in character, spoken by ElevenLabs."
+## 0:55 Set dressing, live
+Turn to the wall. Say "Lumos." Say "Reducto." Hole in the wall, debris, heals.
+"Those are edits to the splats themselves, in a sphere around the wand. Set dressing you can change on stage."
 
-## 1:20 Cast
-Turn to the wall. Say "Lumos." The stone lights up. "That is not a light. Spark is editing the splats themselves in a sphere around the wand."
-Say "Reducto." Hole in the wall, debris, heals. Say "Expecto Patronum" down the hall: the stag runs between the tables.
+## 1:05 The shot (hero moment)
+Press C. Webcam preview, "With: Harry" already picked. Press Space. 3-2-1.
+"Now the part a VFX supervisor cares about. The live frame, my webcam, and a photoreal reference of Harry go to Seedream."
+Ten seconds later: you and Harry, side by side in the Great Hall, lit by the candles, live-action look.
+"Matched lighting, shadows, depth of field, grain. Ten seconds. No green screen, no roto."
+Click Another, pick Upload a photo, choose your own picture, take it again with Hermione if time allows.
 
-## 1:35 Photo
-Press C. Webcam preview, "With: Harry" already picked. Press Space. 3-2-1. Ten seconds later: you and Harry, side by side in the Great Hall, lit by the candles, live-action look. "That is Seedream compositing my webcam and a photoreal Harry into the live frame." Click Save. (Upload a photo works instead of the webcam; the picker also offers Hermione and Dumbledore, or nobody.)
+## 1:40 Second set
+Walk through the orange door at the far end. Fade. Diagon Alley at night.
+"Second set, same pipeline: one photo of the set, cleaned with Seedream, sharpened as a panorama, into Marble. Twelve minutes from photo to walkable."
 
-## 1:45 Out into the alley
-Walk through the orange door at the far end. Fade. Diagon Alley at night, shop windows glowing. Say "Lumos" once on the cobbles. "Third world, same pipeline: one photo of the set, cleaned up with Seedream, into Marble." The orange pad here takes you back to the broom.
-
-## 1:45 Roles
-- World Labs Marble 1.1 Plus: all three worlds, image-prompted from free-license photos of the film's model and sets, cleaned up with Seedream (tourists, railings, studio ceilings removed).
-- Spark 2: splat rendering and the live splat edits behind Lumos and Reducto.
-- Tripo: broom, Patronus stag, and the three characters (rigged on Meshy, posed live).
-- Mint: asset pack for set dressing (if landed) / concept-to-3D.
-- Convex: leaderboard (if landed).
-- Claude + ElevenLabs via FAL: dialogue and voices. Seedream via FAL: photo cleanup and T-pose concept sheets. Stable Audio: music and spell sounds.
+## 1:50 Roles
+- World Labs Marble 1.1 Plus: all three sets, image and panorama prompted from free-license photos of the film's model and sets, cleaned up and enhanced with Seedream.
+- Spark 2: splat rendering, depth of field, and the live splat edits behind Lumos and Reducto.
+- Three.js post: bloom, film grade, vignette.
+- Seedream via FAL: set cleanup, panorama enhancement, and the composite that puts a real person into the shot.
+- Tripo: broom, Patronus stag, and three characters as extras. Claude + ElevenLabs via FAL: the extras talk (press E). Stable Audio: music, ambience, spell sounds.
 
 ## 1:55 Close
-"Built today. Reset is R. Go fly it."
+"Built today. Any set you can photograph, you can walk and shoot in. Go take a picture."
 
 ## If something breaks
 - Any world: `?world=castle3`, `?world=hall3`, `?world=alley` in the URL. Add `&q=500k` on a weak laptop, `&flat=1` to drop the film look.
+- Photo mode: needs camera permission once. Upload a photo works without a camera. `&robes=1` dresses you in Hogwarts robes.
 - Talk box stuck: click the scene or the Walk away button.
-- Photo mode: needs camera permission once. `&robes=1` in the URL dresses you in Hogwarts robes.
 
 ## Keys
 Fly: mouse steer, W fly, Shift boost, Space stop, R restart. Walk: WASD, E talk, Esc leave. C photo anywhere. Spells: V voice toggle, 1 Lumos, 2 Incendio, 3 Patronum, 4 Expelliarmus, 5 Leviosa, 6 Reducto, 0 Nox. P prints your position.
