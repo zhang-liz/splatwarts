@@ -61,13 +61,33 @@ export class Broom {
       if (!r.ok || !(r.headers.get("content-type") || "").includes("model")) return;
       const gltf = await new GLTFLoader().loadAsync(url);
       const m = gltf.scene;
-      // Tripo exports are ~1 unit tall, upright. Lay along -Z so the head points forward.
+      // Find the long axis, then the bristle end: the end with the widest
+      // cross-section. Point the handle forward (-Z) and the bristles back (+Z).
       const box = new THREE.Box3().setFromObject(m);
       const size = box.getSize(new THREE.Vector3());
-      const longest = Math.max(size.x, size.y, size.z);
+      const axes = ["x", "y", "z"]; const axis = axes[[size.x, size.y, size.z].indexOf(Math.max(size.x, size.y, size.z))];
+      const others = axes.filter((a) => a !== axis);
+      const lo = { n: 0, s: 0 }, hi = { n: 0, s: 0 }; const mid = (box.min[axis] + box.max[axis]) / 2, span = size[axis];
+      const v = new THREE.Vector3();
+      m.updateWorldMatrix(true, true);
+      m.traverse((o) => {
+        if (!o.isMesh) return;
+        const pos = o.geometry.attributes.position; const step = Math.max(1, Math.floor(pos.count / 20000));
+        for (let i = 0; i < pos.count; i += step) {
+          v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld);
+          const t = (v[axis] - mid) / span; if (Math.abs(t) < 0.25) continue;
+          const spread = Math.abs(v[others[0]] - (box.min[others[0]] + box.max[others[0]]) / 2) + Math.abs(v[others[1]] - (box.min[others[1]] + box.max[others[1]]) / 2);
+          const b = t > 0 ? hi : lo; b.n++; b.s += spread;
+        }
+      });
+      const bristlesAtHi = (hi.s / Math.max(1, hi.n)) > (lo.s / Math.max(1, lo.n));
+      // Rotate so `axis` maps onto +Z, with the bristle end at +Z.
+      if (axis === "x") m.rotation.y = bristlesAtHi ? Math.PI / 2 : -Math.PI / 2;
+      else if (axis === "y") m.rotation.x = bristlesAtHi ? Math.PI / 2 : -Math.PI / 2;
+      else if (!bristlesAtHi) m.rotation.y = Math.PI;
+      const longest = size[axis];
       m.scale.setScalar(2.2 / longest);
-      if (size.y === longest) m.rotation.x = -Math.PI / 2;
-      else if (size.x === longest) m.rotation.y = -Math.PI / 2;
+      console.log("broom axis", axis, "bristles at hi", bristlesAtHi);
       const wrap = new THREE.Group(); wrap.add(m);
       this.pitchNode.remove(this.mesh);
       this.mesh = wrap;
