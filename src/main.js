@@ -7,6 +7,7 @@ import { Broom } from "./broom.js";
 import { Walker } from "./walker.js";
 import { Characters } from "./characters.js";
 import { Dialogue } from "./dialogue.js";
+import { Spells } from "./spells.js";
 import { Hud, chime, music } from "./hud.js";
 
 const canvas = document.getElementById("canvas");
@@ -31,7 +32,11 @@ const sun = new THREE.DirectionalLight(0xffffff, 1.5); sun.position.set(5, 10, 2
 const broom = new Broom(camera, canvas);
 const walker = new Walker(camera, canvas);
 const dialogue = new Dialogue();
-dialogue.onClose = () => { walker.frozen = false; hud.setMsg("Click to look around"); music.duck(false); };
+const spells = new Spells(scene, camera, hud);
+spells.targets = () => chars?.items ?? [];
+dialogue.onClose = () => { walker.frozen = false; hud.setMsg("Click to look around"); music.duck(false); if (voiceOn) spells.listen(true); };
+let voiceOn = false;
+addEventListener("keydown", (e) => { if (e.code === "KeyV" && e.target?.tagName !== "INPUT") { voiceOn = !voiceOn; spells.listen(voiceOn); } });
 canvas.addEventListener("click", () => { canvas.requestPointerLock(); music.start(); });
 
 // ---- current world state ----
@@ -59,7 +64,7 @@ function makeDisc(color, r) {
 }
 
 async function loadWorld(key) {
-  switching = true;
+  switching = true; spells.enabled = false; spells.listen(false);
   fade.style.opacity = 1;
   await new Promise((r) => setTimeout(r, 650));
   // tear down
@@ -104,7 +109,7 @@ function setup(R) {
     broom.ready = true;
     const p = world.pad ?? [0, -R * 0.3, R * 0.15];
     pad = makeDisc(0x66ccff, R * 0.09); pad.position.set(...p); stage.add(pad);
-    hintEl.textContent = "Mouse: steer · W: fly / faster · S: slower · Shift: boost · Space: stop · R: restart · Land on the blue pad to enter the castle";
+    hintEl.textContent = "Mouse steer · W fly · Shift boost · Space stop · R restart · V voice spells · 1-6 spells · Land on the blue pad to enter the castle";
   } else {
     walker.setScale(R, world.eye ?? 0);
     walker.reset({ position: [0, 0, R * 0.05], yaw: 0 });
@@ -116,8 +121,9 @@ function setup(R) {
     chars = new Characters(stage, (world.characters ?? []).map((c) => ({ ...c, pos: [c.pos[0] * R, floor, c.pos[2] * R] })), R, ((world.eye ?? 0) - floor) * 1.1);
     const d = world.door ?? [0, floor, R * 0.5];
     door = makeDisc(0xffaa33, R * 0.07); door.position.set(...d); stage.add(door);
-    hintEl.textContent = "WASD: walk · Shift: run · Walk up to someone, press E · Type and Enter, or hold E and speak · Esc: walk away · Orange pad: back to the broom";
+    hintEl.textContent = "WASD walk · E talk · V voice spells on/off · 1 Lumos · 2 Incendio · 3 Patronum · 4 Expelliarmus · 5 Leviosa · 6 Reducto · 0 Nox · Orange pad: broom";
   }
+  spells.setScale(R); spells.enabled = true; spells.nox();
   restart();
   fade.style.opacity = 0;
   switching = false;
@@ -141,7 +147,7 @@ addEventListener("keydown", (e) => {
   if (e.code === "KeyE" && mode === "walk") {
     if (!dialogue.open && chars?.near) {
       e.preventDefault();
-      dialogue.start(chars.near); walker.frozen = true; hud.setMsg(""); music.duck(true);
+      spells.listen(false); dialogue.start(chars.near); walker.frozen = true; hud.setMsg(""); music.duck(true);
       document.exitPointerLock?.();
       setTimeout(() => dialogue.input.focus(), 50);
     } else if (dialogue.open && !e.repeat) dialogue.listen(true);
@@ -195,8 +201,9 @@ renderer.setAnimationLoop(() => {
       }
     }
   }
+  spells.update(dt, clock.elapsedTime);
   renderer.render(scene, camera);
 });
 
 loadWorld(new URLSearchParams(location.search).get("world") || START);
-window.__dbg = { get world() { return world; }, get splat() { return splat; }, spark, scene, camera, broom, walker, get rings() { return rings; }, get chars() { return chars; }, dialogue };
+window.__dbg = { get world() { return world; }, get splat() { return splat; }, spark, scene, camera, broom, walker, get rings() { return rings; }, get chars() { return chars; }, dialogue, spells };

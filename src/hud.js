@@ -12,6 +12,12 @@ export class Hud {
   setMsg(s) { this.msg.textContent = s; }
   setSpeed(v) { this.speed.textContent = `${Math.round(v * 3.6)} km/h`; }
   setLoading(s) { this.loading.textContent = s; }
+  setSpell(name) {
+    const el = document.getElementById("spell"); el.textContent = name.toUpperCase();
+    el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop");
+    clearTimeout(this._spellT); this._spellT = setTimeout(() => { el.textContent = ""; }, 1800);
+  }
+  setListen(s) { document.getElementById("listen").textContent = s; }
   finish(t) {
     let line = `Finished in ${t.toFixed(2)}s`;
     if (!this.best || t < this.best) { this.best = t; localStorage.setItem("splatwarts_best", String(t)); line += "  ·  New best!"; }
