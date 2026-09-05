@@ -38,7 +38,7 @@ export class Dialogue {
     this.line.textContent = this.history.has(character.name) ? "…" : "";
     if (!this.history.has(character.name)) this.send("(The visitor walks up to you. Greet them in one short line.)", true);
   }
-  close() { this.character = null; this.box.hidden = true; window.speechSynthesis?.cancel(); this.input.value = ""; this.input.blur(); }
+  close() { this.character = null; this.box.hidden = true; window.speechSynthesis?.cancel(); this.audio?.pause(); this.input.value = ""; this.input.blur(); }
   listen(on) {
     if (!this.rec || !this.character || this.busy) return;
     if (on && !this.listening) { try { this.rec.start(); this.listening = true; this.who.classList.add("listening"); this.you.textContent = "listening…"; } catch {} }
@@ -70,15 +70,24 @@ export class Dialogue {
     } catch (e) { this.line.textContent = "…the words are lost in the noise of the hall."; console.warn(e); }
     this.busy = false;
   }
-  speak(text, name) {
-    const synth = window.speechSynthesis; if (!synth) return;
-    synth.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    const voices = synth.getVoices().filter((v) => v.lang.startsWith("en"));
-    const pick = (re) => voices.find((v) => re.test(v.name)) || voices[0];
-    if (name === "Dumbledore") { u.voice = pick(/Daniel|Arthur|Oliver|Male|Google UK English Male/i); u.pitch = 0.7; u.rate = 0.88; }
-    else if (name === "Hermione") { u.voice = pick(/Kate|Serena|Martha|Female|Google UK English Female/i); u.pitch = 1.15; u.rate = 1.08; }
-    else { u.voice = pick(/Daniel|Arthur|Oliver|Male|Google UK English Male/i); u.pitch = 1.05; u.rate = 1.0; }
-    synth.speak(u);
+  // ElevenLabs through FAL. Falls back to the browser voice if the call fails.
+  async speak(text, name) {
+    const voice = { Dumbledore: "George", Hermione: "Lily", Harry: "Daniel" }[name] || "George";
+    const settings = { Dumbledore: { stability: 0.4, similarity_boost: 0.8, speed: 0.9 }, Hermione: { stability: 0.5, similarity_boost: 0.8, speed: 1.05 }, Harry: { stability: 0.5, similarity_boost: 0.8, speed: 1.0 } }[name] || {};
+    try {
+      this.audio?.pause();
+      const r = await fetch("/api/tts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, voice, ...settings }) });
+      const j = await r.json();
+      if (!j.audio?.url) throw new Error("no audio");
+      this.audio = new Audio(j.audio.url);
+      await this.audio.play();
+    } catch (e) {
+      console.warn("TTS fallback", e);
+      const synth = window.speechSynthesis; if (!synth) return;
+      synth.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      if (name === "Dumbledore") { u.pitch = 0.7; u.rate = 0.88; } else if (name === "Hermione") { u.pitch = 1.15; u.rate = 1.08; }
+      synth.speak(u);
+    }
   }
 }

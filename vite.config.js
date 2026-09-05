@@ -16,6 +16,12 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
+      "/api/tts": {
+        target: "https://fal.run",
+        changeOrigin: true,
+        rewrite: () => "/fal-ai/elevenlabs/tts/turbo-v2.5",
+        headers: { Authorization: `Key ${envKey("fal-api-key")}` },
+      },
       "/api/llm": {
         target: "https://fal.run",
         changeOrigin: true,
