@@ -107,7 +107,8 @@ function setup(R) {
     broom.setScale(R);
     broom.reset(spawnFor(course, R));
     broom.ready = true;
-    const p = world.pad ?? [0, -R * 0.3, R * 0.15];
+    const ground = measureFloor(splat, R);
+    const p = world.pad ?? [0, (ground ?? -R * 0.3) + R * 0.04, R * 0.12];
     pad = makeDisc(0x66ccff, R * 0.09); pad.position.set(...p); stage.add(pad);
     hintEl.textContent = "Mouse steer · W fly · Shift boost · Space stop · R restart · V voice spells · 1-6 spells · Land on the blue pad to enter the castle";
   } else {
