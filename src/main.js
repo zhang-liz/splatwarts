@@ -19,7 +19,7 @@ const fade = document.getElementById("fade");
 const hintEl = document.getElementById("hint");
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.02, 2000);
+const camera = new THREE.PerspectiveCamera(62, innerWidth / innerHeight, 0.02, 2000); // longer lens reads more cinematic, less edge stretch
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
 renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
@@ -151,6 +151,9 @@ function setup(R) {
   }
   spells.setScale(R, mode === "walk" ? ((world.eye ?? 0) - world.floorY) : null); spells.enabled = true; spells.nox();
   post.look(mode); lightFor(mode); music.ambience(world.ambience ?? null);
+  // Subtle depth of field on the splats: sharp where the player looks, the smeared rim softens.
+  spark.focalDistance = mode === "walk" ? R * 0.45 : R * 0.6;
+  spark.apertureAngle = Post.wanted() ? (mode === "walk" ? 0.006 : 0.004) : 0;
   restart();
   fade.style.opacity = 0;
   switching = false;
