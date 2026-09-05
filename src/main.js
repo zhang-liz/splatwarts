@@ -7,7 +7,7 @@ import { Broom } from "./broom.js";
 import { Walker } from "./walker.js";
 import { Characters } from "./characters.js";
 import { Dialogue } from "./dialogue.js";
-import { Hud, chime } from "./hud.js";
+import { Hud, chime, music } from "./hud.js";
 
 const canvas = document.getElementById("canvas");
 const hud = new Hud();
@@ -31,8 +31,8 @@ const sun = new THREE.DirectionalLight(0xffffff, 1.5); sun.position.set(5, 10, 2
 const broom = new Broom(camera, canvas);
 const walker = new Walker(camera, canvas);
 const dialogue = new Dialogue();
-dialogue.onClose = () => { walker.frozen = false; hud.setMsg("Click to look around"); };
-canvas.addEventListener("click", () => canvas.requestPointerLock());
+dialogue.onClose = () => { walker.frozen = false; hud.setMsg("Click to look around"); music.duck(false); };
+canvas.addEventListener("click", () => { canvas.requestPointerLock(); music.start(); });
 
 // ---- current world state ----
 let world = null, splat = null, rings = null, chars = null, pad = null, door = null;
@@ -141,12 +141,12 @@ addEventListener("keydown", (e) => {
   if (e.code === "KeyE" && mode === "walk") {
     if (!dialogue.open && chars?.near) {
       e.preventDefault();
-      dialogue.start(chars.near); walker.frozen = true; hud.setMsg("");
+      dialogue.start(chars.near); walker.frozen = true; hud.setMsg(""); music.duck(true);
       document.exitPointerLock?.();
       setTimeout(() => dialogue.input.focus(), 50);
     } else if (dialogue.open && !e.repeat) dialogue.listen(true);
   }
-  if (e.code === "Escape" && dialogue.open) { dialogue.close(); walker.frozen = false; hud.setMsg("Click to look around"); }
+  if (e.code === "Escape" && dialogue.open) { dialogue.close(); dialogue.onClose?.(); }
   if (e.code === "KeyP") {
     const p = (mode === "fly" ? broom : walker).position;
     console.log(`pos: [${p.x.toFixed(2)}, ${p.y.toFixed(2)}, ${p.z.toFixed(2)}]  yaw ${(mode === "fly" ? broom : walker).yaw.toFixed(3)}`);

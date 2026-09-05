@@ -33,3 +33,15 @@ export function chime(step = 0) {
     o.connect(g); g.connect(ctx.destination); o.start(); o.stop(ctx.currentTime + 0.4);
   } catch {}
 }
+
+// Background music. Starts on the first click (browsers block autoplay), ducks while talking.
+export const music = {
+  el: null,
+  start() {
+    if (this.el) return;
+    const a = new Audio("/audio/theme.mp3"); a.loop = true; a.volume = 0.35;
+    a.play().catch(() => {});
+    this.el = a;
+  },
+  duck(on) { if (this.el) this.el.volume = on ? 0.12 : 0.35; },
+};

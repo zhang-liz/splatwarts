@@ -12,6 +12,7 @@ export class Rings {
     this.rings = course.map((c, i) => this.makeRing(c, i));
     this.next = 0;
     this.lastSide = null;
+    this.bursts = [];
   }
 
   makeRing({ position, normal }, index) {
@@ -57,6 +58,7 @@ export class Rings {
 
   // Returns true if the player passed the next ring this frame.
   update(playerPos, dt, time) {
+    this.tickBursts(dt);
     for (let i = 0; i < this.rings.length; i++) {
       const r = this.rings[i];
       if (!r.passed) r.mesh.rotation.z += dt * 0.6 * (i === this.next ? 1 : 0.2);
@@ -77,12 +79,30 @@ export class Rings {
       this.next++;
       this.lastSide = null;
       this.highlight();
+      this.burst(r.position);
     } else {
       this.lastSide = side;
     }
     return passed;
   }
 
+  burst(at) {
+    const n = 60;
+    const pos = new Float32Array(n * 3), vel = [];
+    for (let i = 0; i < n; i++) { pos.set([at.x, at.y, at.z], i * 3); vel.push(new THREE.Vector3().randomDirection().multiplyScalar(this.R * (0.6 + Math.random()))); }
+    const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    const mat = new THREE.PointsMaterial({ color: 0xffe08a, size: this.R * 0.12, transparent: true, opacity: 1, depthWrite: false });
+    const pts = new THREE.Points(geo, mat); this.group.add(pts);
+    this.bursts.push({ pts, vel, life: 0 });
+  }
+  tickBursts(dt) {
+    for (const b of this.bursts) {
+      b.life += dt; const a = b.pts.geometry.attributes.position;
+      for (let i = 0; i < b.vel.length; i++) { a.array[i * 3] += b.vel[i].x * dt; a.array[i * 3 + 1] += (b.vel[i].y - b.life * this.R * 0.8) * dt; a.array[i * 3 + 2] += b.vel[i].z * dt; }
+      a.needsUpdate = true; b.pts.material.opacity = Math.max(0, 1 - b.life / 0.9);
+    }
+    this.bursts = this.bursts.filter((b) => { if (b.life > 0.9) { this.group.remove(b.pts); b.pts.geometry.dispose(); return false; } return true; });
+  }
   get total() { return this.rings.length; }
   get done() { return this.next >= this.rings.length; }
 }
