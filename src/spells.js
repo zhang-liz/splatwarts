@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { SplatEdit, SplatEditSdf, SplatEditSdfType, SplatEditRgbaBlendMode } from "@sparkjsdev/spark";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 // Spells. Say the words (Chrome speech recognition) or press 1-6.
 // Lumos lights the real splats around the wand tip through Spark's SDF edits.
@@ -36,6 +37,28 @@ export class Spells {
       const s = SPELLS.find((x) => x.key === e.code); if (s && !e.repeat) this.cast(s.name);
     });
     this.setupVoice();
+    this.loadStag("/models/stag.glb");
+  }
+
+  // Patronus: a glowing stag mesh if the model exists, particles either way.
+  async loadStag(url) {
+    try {
+      const r = await fetch(url, { method: "HEAD" });
+      if (!r.ok || !(r.headers.get("content-type") || "").includes("model")) return;
+      const gltf = await new GLTFLoader().loadAsync(url);
+      const m = gltf.scene;
+      const box = new THREE.Box3().setFromObject(m); const size = box.getSize(new THREE.Vector3());
+      const longest = Math.max(size.x, size.y, size.z);
+      m.scale.setScalar(1 / longest); // unit length, rescaled per cast
+      m.position.sub(box.getCenter(new THREE.Vector3()).multiplyScalar(1 / longest));
+      const mat = new THREE.MeshBasicMaterial({ color: 0x9fdcff, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false });
+      m.traverse((o) => { if (o.isMesh) o.material = mat; });
+      const wrap = new THREE.Group(); wrap.add(m);
+      // Face -Z: the concept was a side view, so the long axis is x. Turn it.
+      if (size.x >= size.z) m.rotation.y = -Math.PI / 2;
+      this.stag = wrap; this.stagMat = mat;
+      console.log("Loaded stag");
+    } catch (e) { console.warn("No stag", e); }
   }
 
   // R sizes the effects. `hand` sizes the wand: eye height on foot, hidden on the broom.
@@ -81,7 +104,7 @@ export class Spells {
       case "Lumos": return this.castLumos();
       case "Nox": return this.nox();
       case "Incendio": this.play("incendio"); return this.particles({ color: [0xff6a00, 0xffc400, 0xff2a00], count: 260, origin: tip, dir, speed: R * 0.5, spread: 0.18, life: 1.4, size: R * 0.035, rise: R * 0.25, glow: { color: 0xff7a1a, at: tip.clone().addScaledVector(dir, R * 0.3), radius: R * 0.2, life: 1.2 } });
-      case "Expecto Patronum": this.play("patronum"); this.particles({ color: [0x9ed8ff, 0xffffff, 0x4fb6ff], count: 700, origin: tip, dir, speed: R * 0.35, spread: 0.35, life: 3.2, size: R * 0.05, rise: R * 0.05, swirl: true, glow: { color: 0x66c2ff, at: tip.clone().addScaledVector(dir, R * 0.35), radius: R * 0.45, life: 3.0, travel: dir.clone().multiplyScalar(R * 0.12) } }); return;
+      case "Expecto Patronum": this.play("patronum"); this.patronus(tip, dir); this.particles({ color: [0x9ed8ff, 0xffffff, 0x4fb6ff], count: 700, origin: tip, dir, speed: R * 0.35, spread: 0.35, life: 3.2, size: R * 0.05, rise: R * 0.05, swirl: true, glow: { color: 0x66c2ff, at: tip.clone().addScaledVector(dir, R * 0.35), radius: R * 0.45, life: 3.0, travel: dir.clone().multiplyScalar(R * 0.12) } }); return;
       case "Expelliarmus": this.play("expelliarmus"); return this.bolt({ color: 0xff3b3b, origin: tip, dir, speed: R * 1.2, onHit: (t) => this.knockback(t, dir) });
       case "Wingardium Leviosa": this.play("leviosa"); return this.levitate(this.nearestTarget(dir));
       case "Reducto": this.play("reducto"); return this.reducto(tip.clone().addScaledVector(dir, R * 0.45));
@@ -100,6 +123,17 @@ export class Spells {
     this.tipGlow.material.opacity = 1; this.light.intensity = 6;
   }
   nox() { if (this.lumos) { this.scene.remove(this.lumos.edit); this.lumos = null; } this.tipGlow.material.opacity = 0; this.light.intensity = 0; }
+
+  patronus(tip, dir) {
+    if (!this.stag) return;
+    const s = this.stag.clone(); s.traverse((o) => { if (o.isMesh) o.material = this.stagMat.clone(); });
+    const len = this.R * 0.5;
+    s.scale.setScalar(len);
+    s.position.copy(tip).addScaledVector(dir, len * 0.6).add(new THREE.Vector3(0, -this.R * 0.05, 0));
+    s.lookAt(s.position.clone().add(new THREE.Vector3(dir.x, 0, dir.z)));
+    this.scene.add(s);
+    this.fx.push({ kind: "stag", m: s, dir: dir.clone(), t: 0, life: 4.5, speed: this.R * 0.28 });
+  }
 
   // ---- Reducto: multiply opacity to zero inside a growing sphere, then heal
   reducto(at) {
@@ -191,6 +225,13 @@ export class Spells {
           if (f.t > f.glow.life) { this.scene.remove(f.glow.edit); f.glow = null; }
         }
         if (f.t > f.life) { this.scene.remove(f.pts); f.pts.geometry.dispose(); if (f.glow) this.scene.remove(f.glow.edit); continue; }
+      } else if (f.kind === "stag") {
+        f.m.position.addScaledVector(f.dir, f.speed * dt);
+        f.m.position.y += Math.sin(f.t * 6) * this.R * 0.01; // gallop bob
+        f.m.rotation.x = Math.sin(f.t * 6) * 0.08;
+        const k = f.t < 0.5 ? f.t / 0.5 : f.t > f.life - 1.2 ? Math.max(0, (f.life - f.t) / 1.2) : 1;
+        f.m.traverse((o) => { if (o.isMesh) o.material.opacity = 0.85 * k; });
+        if (f.t > f.life) { this.scene.remove(f.m); continue; }
       } else if (f.kind === "bolt") {
         f.m.position.addScaledVector(f.dir, f.speed * dt);
         const hit = this.targets().find((t) => t.root.position.distanceTo(f.m.position) < t.h * 0.6);
