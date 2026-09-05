@@ -1,3 +1,4 @@
+import * as THREE from "three";
 // Worlds. A Marble world is a bubble seen from its center, so play stays
 // inside `radius` (world units, auto-measured when null).
 // mode: "fly" = broom race with rings and a landing pad. "walk" = on foot with characters.
@@ -70,4 +71,20 @@ export function measureRadius(splat) {
   if (d.length < 100) return null;
   d.sort((a, b) => a - b);
   return d[Math.floor(d.length * 0.7)];
+}
+
+// Measure the floor: the lowest splats right under the camera. Centers come
+// back in the splat's own frame, so apply the world quaternion first.
+export function measureFloor(splat, R) {
+  const ys = [];
+  let i = 0;
+  const v = new THREE.Vector3();
+  splat.forEachSplat((_, center) => {
+    if (i++ % 7 !== 0) return;
+    v.copy(center).applyQuaternion(splat.quaternion);
+    if (Math.hypot(v.x, v.z) < R * 0.35 && v.y < 0) ys.push(v.y);
+  });
+  if (ys.length < 50) return null;
+  ys.sort((a, b) => a - b);
+  return ys[Math.floor(ys.length * 0.04)];
 }

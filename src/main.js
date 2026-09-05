@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { SparkRenderer, SplatMesh } from "@sparkjsdev/spark";
-import { worldFromQuery, measureRadius, START } from "./worlds.js";
+import { worldFromQuery, measureRadius, measureFloor, START } from "./worlds.js";
 import { buildCourse, spawnFor, HAND_COURSE } from "./course.js";
 import { Rings } from "./rings.js";
 import { Broom } from "./broom.js";
@@ -90,6 +90,7 @@ async function loadWorld(key) {
 function setup(R) {
   world.radius = R;
   hud.setLoading(`${world.name} · ${world.credit} · r ${R.toFixed(1)}`);
+  if (mode === "walk") setTimeout(() => hud.setLoading(`${world.name} · ${world.credit} · r ${R.toFixed(1)} · floor ${world.floorY?.toFixed(2)}`), 0);
   if (mode === "fly") {
     const course = HAND_COURSE ? HAND_COURSE.map((p, i, arr) => {
       const position = new THREE.Vector3(...p);
@@ -109,7 +110,8 @@ function setup(R) {
     walker.ready = true;
     // Floor: Marble puts the input camera at the origin at eye level, so the floor
     // sits about a third of the world radius below it.
-    const floor = world.floor ?? (world.eye ?? 0) - R * 0.33;
+    const floor = world.floor ?? measureFloor(splat, R) ?? (world.eye ?? 0) - R * 0.33;
+    world.floorY = floor;
     chars = new Characters(stage, (world.characters ?? []).map((c) => ({ ...c, pos: [c.pos[0] * R, floor, c.pos[2] * R] })), R, ((world.eye ?? 0) - floor) * 1.1);
     const d = world.door ?? [0, floor, R * 0.5];
     door = makeDisc(0xffaa33, R * 0.07); door.position.set(...d); stage.add(door);
