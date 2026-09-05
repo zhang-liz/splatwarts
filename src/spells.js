@@ -22,9 +22,9 @@ export class Spells {
     this.sfx = Object.fromEntries(["lumos", "incendio", "patronum", "expelliarmus", "leviosa", "reducto"].map((n) => [n, new Audio(`/audio/sfx/${n}.mp3`)]));
     // Wand in the right hand
     this.wand = new THREE.Group();
-    const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.01, 0.42, 10), new THREE.MeshStandardMaterial({ color: 0x3b2418, roughness: 0.7 }));
-    stick.rotation.x = -Math.PI / 2 + 0.25; stick.position.set(0, 0, -0.18); this.wand.add(stick);
-    this.tip = new THREE.Object3D(); this.tip.position.set(0, 0.05, -0.39); this.wand.add(this.tip);
+    const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.009, 0.36, 10), new THREE.MeshStandardMaterial({ color: 0x3b2418, roughness: 0.7 }));
+    stick.rotation.x = -Math.PI / 2 + 0.3; stick.position.set(0, 0, -0.16); this.wand.add(stick);
+    this.tip = new THREE.Object3D(); this.tip.position.set(0, 0.052, -0.33); this.wand.add(this.tip);
     this.tipGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: 0xfff2c0, transparent: true, opacity: 0, depthTest: false, blending: THREE.AdditiveBlending }));
     this.tipGlow.scale.setScalar(0.12); this.tip.add(this.tipGlow);
     this.light = new THREE.PointLight(0xffe0a0, 0, 20); this.tip.add(this.light);
@@ -38,11 +38,13 @@ export class Spells {
     this.setupVoice();
   }
 
-  setScale(R) {
+  // R sizes the effects. `hand` sizes the wand: eye height on foot, hidden on the broom.
+  setScale(R, hand = null) {
     this.R = R;
-    const s = R / 10;
-    this.wand.position.set(0.22 * s, -0.16 * s, -0.35 * s);
-    this.wand.scale.setScalar(s);
+    this.wand.visible = hand != null;
+    const s = hand ?? R / 10;
+    this.wand.position.set(0.16 * s, -0.12 * s, -0.28 * s);
+    this.wand.scale.setScalar(s * 0.9);
     this.light.distance = R * 0.6;
   }
 

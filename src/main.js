@@ -123,7 +123,7 @@ function setup(R) {
     door = makeDisc(0xffaa33, R * 0.07); door.position.set(...d); stage.add(door);
     hintEl.textContent = "WASD walk · E talk · V voice spells on/off · 1 Lumos · 2 Incendio · 3 Patronum · 4 Expelliarmus · 5 Leviosa · 6 Reducto · 0 Nox · Orange pad: broom";
   }
-  spells.setScale(R); spells.enabled = true; spells.nox();
+  spells.setScale(R, mode === "walk" ? ((world.eye ?? 0) - world.floorY) : null); spells.enabled = true; spells.nox();
   restart();
   fade.style.opacity = 0;
   switching = false;
