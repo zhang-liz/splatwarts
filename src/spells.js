@@ -92,12 +92,12 @@ export class Spells {
   castLumos() {
     this.play("lumos");
     if (!this.lumos) {
-      const edit = new SplatEdit({ rgbaBlendMode: SplatEditRgbaBlendMode.ADD_RGBA, softEdge: this.R * 0.25 });
-      const sdf = new SplatEditSdf({ type: SplatEditSdfType.SPHERE, radius: this.R * 0.12, color: new THREE.Color(0.55, 0.42, 0.18), opacity: 0 });
+      const edit = new SplatEdit({ rgbaBlendMode: SplatEditRgbaBlendMode.ADD_RGBA, softEdge: this.R * 0.45 });
+      const sdf = new SplatEditSdf({ type: SplatEditSdfType.SPHERE, radius: this.R * 0.28, color: new THREE.Color(1.0, 0.82, 0.45), opacity: 0 });
       edit.add(sdf); this.scene.add(edit);
       this.lumos = { edit, sdf, t: 0 };
     }
-    this.tipGlow.material.opacity = 1; this.light.intensity = 4;
+    this.tipGlow.material.opacity = 1; this.light.intensity = 6;
   }
   nox() { if (this.lumos) { this.scene.remove(this.lumos.edit); this.lumos = null; } this.tipGlow.material.opacity = 0; this.light.intensity = 0; }
 
