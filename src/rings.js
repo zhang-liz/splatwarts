@@ -26,7 +26,7 @@ export class Rings {
     // Number label sprite
     const label = makeLabel(String(index + 1));
     label.position.set(0, this.R * 1.35, 0);
-    label.scale.setScalar(this.R * 0.6);
+    label.scale.setScalar(this.R * 0.35);
     mesh.add(label);
     this.group.add(mesh);
     return { mesh, position, normal, passed: false, label };
