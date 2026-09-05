@@ -4,16 +4,16 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 // Characters standing in a world. Each is a GLB (Tripo export, rigged, with
 // an idle clip) or a placeholder capsule until the GLB exists.
 export class Characters {
-  constructor(scene, list, R) {
+  constructor(scene, list, R, height) {
     this.scene = scene; this.group = new THREE.Group(); scene.add(this.group);
-    this.R = R; this.mixers = [];
+    this.R = R; this.height = height ?? R * 0.36; this.mixers = [];
     this.items = list.map((c) => this.spawn(c));
     this.near = null;
   }
   spawn(c) {
     const root = new THREE.Group();
     root.position.set(...c.pos); root.rotation.y = c.yaw ?? 0;
-    const h = this.R * 0.11; // character height in world units
+    const h = this.height; // character height in world units
     const body = new THREE.Mesh(new THREE.CapsuleGeometry(h * 0.16, h * 0.55, 6, 12), new THREE.MeshStandardMaterial({ color: c.color ?? 0x7a5cff, roughness: 0.6 }));
     body.position.y = h * 0.45; root.add(body);
     const label = makeLabel(c.name); label.position.y = h * 1.15; label.scale.setScalar(h * 0.5); root.add(label);
@@ -46,7 +46,7 @@ export class Characters {
     for (const m of this.mixers) m.update(dt);
     let best = null, bestD = this.R * 0.14;
     for (const it of this.items) {
-      const d = it.root.position.distanceTo(playerPos);
+      const d = Math.hypot(it.root.position.x - playerPos.x, it.root.position.z - playerPos.z);
       if (d < this.R * 0.5) {
         const target = Math.atan2(playerPos.x - it.root.position.x, playerPos.z - it.root.position.z);
         let diff = target - it.root.rotation.y; diff = Math.atan2(Math.sin(diff), Math.cos(diff));
