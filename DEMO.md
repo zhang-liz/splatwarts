@@ -26,7 +26,7 @@ Turn to the wall. Say "Lumos." The stone lights up. "That is not a light. Spark 
 Say "Reducto." Hole in the wall, debris, heals. Say "Expecto Patronum" down the hall: the stag runs between the tables.
 
 ## 1:35 Photo
-Press C. Webcam preview. Press Space. 3-2-1. Ten seconds later: you, standing in the Great Hall, lit by the candles. "That is Seedream compositing my webcam into the live frame." Click Save.
+Press C. Webcam preview, "With: Harry" already picked. Press Space. 3-2-1. Ten seconds later: you and Harry, side by side in the Great Hall, lit by the candles, live-action look. "That is Seedream compositing my webcam and a photoreal Harry into the live frame." Click Save. (Upload a photo works instead of the webcam; the picker also offers Hermione and Dumbledore, or nobody.)
 
 ## 1:45 Out into the alley
 Walk through the orange door at the far end. Fade. Diagon Alley at night, shop windows glowing. Say "Lumos" once on the cobbles. "Third world, same pipeline: one photo of the set, cleaned up with Seedream, into Marble." The orange pad here takes you back to the broom.
