@@ -6,7 +6,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 export class Characters {
   constructor(scene, list, R, height) {
     this.scene = scene; this.group = new THREE.Group(); scene.add(this.group);
-    this.R = R; this.height = height ?? R * 0.36; this.mixers = [];
+    this.R = R; this.height = height ?? R * 0.36;
     this.items = list.map((c) => this.spawn(c));
     this.near = null;
   }
@@ -33,17 +33,16 @@ export class Characters {
       const s = item.h / size.y; m.scale.setScalar(s);
       m.position.y = -box.min.y * s;
       item.root.remove(item.body); item.root.add(m); item.model = m;
-      if (gltf.animations?.length) {
-        const mixer = new THREE.AnimationMixer(m);
-        const idle = gltf.animations.find((a) => /idle/i.test(a.name)) || gltf.animations[0];
-        mixer.clipAction(idle).play(); this.mixers.push(mixer);
-      }
-      console.log("Loaded character", item.name, gltf.animations?.map((a) => a.name));
+      // Meshy's animation presets swing the arms about, and the auto-rig stretches the robes
+      // with them. Stand in the bind pose instead, lower the arms, and breathe a little.
+      item.pose = relaxedPose(m);
+      console.log("Loaded character", item.name, item.pose ? "posed" : "no skeleton", gltf.animations?.map((a) => a.name));
     } catch (e) { console.warn("Character load failed", item.name, e); }
   }
   // Face the player, tick animations, find who is close enough to talk to.
   update(dt, playerPos) {
-    for (const m of this.mixers) m.update(dt);
+    this.t = (this.t ?? 0) + dt;
+    for (const it of this.items) if (it.pose) breathe(it.pose, this.t + it.root.position.x * 7);
     let best = null, bestD = this.R * 0.14;
     for (const it of this.items) {
       const d = Math.hypot(it.root.position.x - playerPos.x, it.root.position.z - playerPos.z);
@@ -69,4 +68,44 @@ function makeLabel(text) {
   sprite.renderOrder = 3;
   sprite.scale.set(4, 1, 1);
   return sprite;
+}
+
+// Put a Mixamo-named skeleton in its bind pose, then swing each upper arm down to hang
+// at the side. Returns the bones we keep moving, or null when there is no skeleton.
+function relaxedPose(model) {
+  let skinned = null;
+  model.traverse((o) => { if (o.isSkinnedMesh && !skinned) skinned = o; });
+  if (!skinned) return null;
+  // The file's node transforms are the rest pose (the A-pose concept). Skeleton.pose() is not
+  // usable here: Meshy parents the bones under a transformed armature node and it lands them
+  // at the origin.
+  model.updateMatrixWorld(true);
+  model.traverse((o) => { if (o.isSkinnedMesh) o.frustumCulled = false; }); // bounds come from the unposed mesh
+  const arms = [];
+  for (const side of ["Left", "Right"]) {
+    const arm = model.getObjectByName(side + "Arm"), fore = model.getObjectByName(side + "ForeArm");
+    if (!arm || !fore) continue;
+    const a = arm.getWorldPosition(new THREE.Vector3()), b = fore.getWorldPosition(new THREE.Vector3());
+    const now = b.sub(a).normalize();
+    const want = new THREE.Vector3(Math.sign(now.x) * 0.18, -1, 0.05).normalize(); // hang down, a touch out and forward
+    const turn = new THREE.Quaternion().setFromUnitVectors(now, want);
+    const parentQ = arm.parent.getWorldQuaternion(new THREE.Quaternion());
+    // world-space turn expressed in the parent's frame, applied on top of the local rotation
+    arm.quaternion.premultiply(parentQ.clone().invert().multiply(turn).multiply(parentQ));
+    arms.push({ bone: arm, base: arm.quaternion.clone(), sign: Math.sign(now.x) });
+  }
+  const spine = model.getObjectByName("Spine02") || model.getObjectByName("Spine");
+  return { arms, spine, spineBase: spine ? spine.quaternion.clone() : null };
+}
+
+function breathe(pose, t) {
+  const q = new THREE.Quaternion();
+  if (pose.spine) {
+    q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.sin(t * 1.6) * 0.02);
+    pose.spine.quaternion.copy(pose.spineBase).multiply(q);
+  }
+  for (const a of pose.arms) {
+    q.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.sin(t * 1.6 + 1) * 0.02 * a.sign);
+    a.bone.quaternion.copy(a.base).multiply(q);
+  }
 }
