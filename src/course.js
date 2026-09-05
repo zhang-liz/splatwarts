@@ -6,8 +6,9 @@ import * as THREE from "three";
 export function buildCourse(R, count = 10) {
   const r = R * 0.55;
   const out = [];
+  // Start at angle PI so ring 1 faces -Z, toward the castle in the view.
   for (let i = 0; i < count; i++) {
-    const a = (i / count) * Math.PI * 2;
+    const a = Math.PI + (i / count) * Math.PI * 2;
     const p = new THREE.Vector3(Math.cos(a) * r, Math.sin(a * 2) * R * 0.12, Math.sin(a) * r);
     const tangent = new THREE.Vector3(-Math.sin(a), 0, Math.cos(a)).normalize();
     out.push({ position: p, normal: tangent });
