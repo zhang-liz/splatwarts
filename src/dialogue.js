@@ -22,11 +22,14 @@ export class Dialogue {
       };
       this.rec.onend = () => { this.listening = false; this.who.classList.remove("listening"); };
     }
+    // Inside the box: Enter sends. E on an empty box = hold to speak. Esc = walk away.
     this.input.addEventListener("keydown", (e) => {
       e.stopPropagation();
       if (e.key === "Enter" && this.input.value.trim()) { const t = this.input.value.trim(); this.input.value = ""; this.you.textContent = `“${t}”`; this.send(t); }
-      if (e.key === "Escape") this.close();
+      if (e.key === "Escape") { this.close(); this.onClose?.(); }
+      if ((e.key === "e" || e.key === "E") && this.input.value === "") { e.preventDefault(); if (!e.repeat) this.listen(true); }
     });
+    this.input.addEventListener("keyup", (e) => { e.stopPropagation(); if (e.key === "e" || e.key === "E") this.listen(false); });
   }
   get open() { return !!this.character; }
   start(character) {
@@ -35,7 +38,7 @@ export class Dialogue {
     this.line.textContent = this.history.has(character.name) ? "…" : "";
     if (!this.history.has(character.name)) this.send("(The visitor walks up to you. Greet them in one short line.)", true);
   }
-  close() { this.character = null; this.box.hidden = true; window.speechSynthesis?.cancel(); this.input.blur(); }
+  close() { this.character = null; this.box.hidden = true; window.speechSynthesis?.cancel(); this.input.value = ""; this.input.blur(); }
   listen(on) {
     if (!this.rec || !this.character || this.busy) return;
     if (on && !this.listening) { try { this.rec.start(); this.listening = true; this.who.classList.add("listening"); this.you.textContent = "listening…"; } catch {} }
