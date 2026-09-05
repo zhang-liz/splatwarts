@@ -5,6 +5,7 @@ import * as THREE from "three";
 export const WORLDS = {
   castle3: {
     name: "Hogwarts",
+    photoPrompt: "the Hogwarts castle on its cliff above the lake at dusk, seen from over the water",
     ambience: "/audio/amb-castle.mp3",
     url: "/worlds/castle3.spz",
     paged: false,
@@ -18,6 +19,7 @@ export const WORLDS = {
   },
   hall3: {
     name: "Great Hall",
+    photoPrompt: "the candle-lit Great Hall of Hogwarts with long wooden tables and a night-sky ceiling",
     candles: true,
     ambience: "/audio/amb-hall.mp3",
     url: "/worlds/hall3.spz",
@@ -35,6 +37,7 @@ export const WORLDS = {
   },
   alley: {
     name: "Diagon Alley",
+    photoPrompt: "Diagon Alley at night, a cobbled wizard shopping street with glowing shop windows",
     ambience: "/audio/amb-alley.mp3",
     url: "/worlds/alley.spz",
     paged: false,

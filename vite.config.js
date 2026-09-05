@@ -22,6 +22,12 @@ export default defineConfig({
         rewrite: () => "/fal-ai/elevenlabs/tts/turbo-v2.5",
         headers: { Authorization: `Key ${envKey("fal-api-key")}` },
       },
+      "/api/edit": {
+        target: "https://fal.run",
+        changeOrigin: true,
+        rewrite: () => "/fal-ai/bytedance/seedream/v4/edit",
+        headers: { Authorization: `Key ${envKey("fal-api-key")}` },
+      },
       "/api/llm": {
         target: "https://fal.run",
         changeOrigin: true,

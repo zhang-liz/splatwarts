@@ -11,6 +11,7 @@ import { Spells } from "./spells.js";
 import { Hud, chime, music } from "./hud.js";
 import { Post } from "./post.js";
 import { Candles } from "./candles.js";
+import { Photo } from "./photo.js";
 
 const canvas = document.getElementById("canvas");
 const hud = new Hud();
@@ -26,7 +27,8 @@ addEventListener("resize", () => {
   camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight); post?.resize();
 });
-const spark = new SparkRenderer({ renderer, pagedExtSplats: true, coneFov0: 70, coneFov: 120, behindFoveate: 0.2, coneFoveate: 0.4 });
+// encodeLinear: the film look renders through a linear composer that encodes once at the end
+const spark = new SparkRenderer({ renderer, pagedExtSplats: true, coneFov0: 70, coneFov: 120, behindFoveate: 0.2, coneFoveate: 0.4, encodeLinear: Post.wanted() });
 scene.add(spark);
 const hemi = new THREE.HemisphereLight(0xffffff, 0x554433, 1.2); scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xffffff, 1.5); sun.position.set(5, 10, 2); scene.add(sun);
@@ -40,6 +42,8 @@ const post = new Post(renderer, scene, camera);
 const broom = new Broom(camera, canvas);
 const walker = new Walker(camera, canvas);
 const dialogue = new Dialogue();
+const photo = new Photo();
+photo.onClose = () => { walker.frozen = false; broom.paused = false; music.duck(false); };
 const spells = new Spells(scene, camera, hud);
 spells.targets = () => chars?.items ?? [];
 dialogue.onClose = () => { walker.frozen = false; hud.setMsg("Click to look around"); music.duck(false); if (voiceOn) spells.listen(true); };
@@ -102,8 +106,17 @@ async function loadWorld(key) {
   if (world.paged) setTimeout(() => { if (state === "loading") setup(world.radius ?? 15); }, 6000);
 }
 
+// Under the effect chain Spark does not pick up a newly added SplatMesh on its own
+// (it keeps showing the previous world), so push a few explicit updates after a load.
+function refreshSplats() {
+  let n = 0;
+  const tick = () => { spark.update({ scene, camera }).catch(() => {}); if (++n < 12) setTimeout(tick, 350); };
+  tick();
+}
+
 function setup(R) {
   world.radius = R;
+  refreshSplats();
   hud.setLoading(`${world.name} · ${world.credit} · r ${R.toFixed(1)}`);
   if (mode === "walk") setTimeout(() => hud.setLoading(`${world.name} · ${world.credit} · r ${R.toFixed(1)} · floor ${world.floorY?.toFixed(2)}`), 0);
   if (mode === "fly") {
@@ -120,7 +133,7 @@ function setup(R) {
     const ground = measureFloor(splat, R);
     const p = world.pad ?? [0, (ground ?? -R * 0.3) + R * 0.05, R * 0.95];
     pad = makeDisc(0x66ccff, R * 0.1); pad.position.set(...p); stage.add(pad);
-    hintEl.textContent = "Mouse steer · W fly · Shift boost · Space stop · R restart · V voice spells · 1-6 spells · Land on the blue pad to enter the castle";
+    hintEl.textContent = "Mouse steer · W fly · Shift boost · Space stop · R restart · V voice spells · 1-6 spells · C photo · Land on the blue pad to enter the castle";
   } else {
     walker.setScale(R, world.eye ?? 0);
     walker.reset({ position: [0, 0, R * 0.05], yaw: 0 });
@@ -133,7 +146,7 @@ function setup(R) {
     const d = world.door ?? [0, floor, R * 0.5];
     door = makeDisc(0xffaa33, R * 0.07); door.position.set(...d); stage.add(door);
     if (world.candles) candles = new Candles(stage, R, floor, world.eye ?? 0);
-    hintEl.textContent = "WASD walk · E talk · V voice spells on/off · 1 Lumos · 2 Incendio · 3 Patronum · 4 Expelliarmus · 5 Leviosa · 6 Reducto · 0 Nox · Orange pad: broom";
+    hintEl.textContent = "WASD walk · E talk · V voice spells on/off · 1 Lumos · 2 Incendio · 3 Patronum · 4 Expelliarmus · 5 Leviosa · 6 Reducto · 0 Nox · C photo · Orange pad: broom";
   }
   spells.setScale(R, mode === "walk" ? ((world.eye ?? 0) - world.floorY) : null); spells.enabled = true; spells.nox();
   post.look(mode); lightFor(mode); music.ambience(world.ambience ?? null);
@@ -156,6 +169,7 @@ function restart() {
 
 addEventListener("keydown", (e) => {
   if (dialogue.open && e.target === dialogue.input) return;
+  if (photo.open && !["Escape", "Space"].includes(e.code)) return;
   if (e.code === "KeyR" && mode === "fly") restart();
   if (e.code === "KeyE" && mode === "walk") {
     if (!dialogue.open && chars?.near) {
@@ -166,6 +180,12 @@ addEventListener("keydown", (e) => {
     } else if (dialogue.open && !e.repeat) dialogue.listen(true);
   }
   if (e.code === "Escape" && dialogue.open) { dialogue.close(); dialogue.onClose?.(); }
+  if (e.code === "Escape" && photo.open) photo.close();
+  if (e.code === "Space" && photo.open) { e.preventDefault(); photo.snap(); }
+  if (e.code === "KeyC" && state !== "loading" && !dialogue.open && !photo.open) {
+    walker.frozen = true; music.duck(true);
+    photo.start(world.photoPrompt ?? world.name);
+  }
   if (e.code === "KeyP") {
     const p = (mode === "fly" ? broom : walker).position;
     console.log(`pos: [${p.x.toFixed(2)}, ${p.y.toFixed(2)}, ${p.z.toFixed(2)}]  yaw ${(mode === "fly" ? broom : walker).yaw.toFixed(3)}`);
@@ -227,6 +247,7 @@ renderer.setAnimationLoop(() => {
   spells.update(dt, clock.elapsedTime);
   candles?.update(dt, camera);
   post.render(scene, camera);
+  photo.grab(renderer.domElement);
 });
 
 loadWorld(new URLSearchParams(location.search).get("world") || START);
