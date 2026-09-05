@@ -27,6 +27,9 @@ export class Characters {
     const h = this.height;
     const body = new THREE.Mesh(new THREE.CapsuleGeometry(h * 0.16, h * 0.55, 6, 12), new THREE.MeshStandardMaterial({ color: c.color ?? 0x7a5cff, roughness: 0.6 }));
     body.position.y = h * 0.45; root.add(body);
+    // soft contact shadow so the figure sits on the splat floor instead of floating
+    const shadow = new THREE.Mesh(new THREE.CircleGeometry(h * 0.3, 24), new THREE.MeshBasicMaterial({ map: shadowTexture(), transparent: true, depthWrite: false, opacity: 0.8 }));
+    shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.004; shadow.renderOrder = 1; root.add(shadow);
     this.group.add(root);
     const item = { ...c, root, body, h, state: "ambient", clips: {}, action: null, stateT: 0 };
     this.load(item);
@@ -142,4 +145,15 @@ function settle(pose, dt, t) {
   for (const [bone, rq] of pose.rest) bone.quaternion.slerp(rq, k);
   if (pose.spine) { q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.sin(t * 1.6) * 0.02); pose.spine.quaternion.multiply(q); }
   for (const a of pose.arms) { q.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.sin(t * 1.6 + 1) * 0.02 * a.sign); a.bone.quaternion.multiply(q); }
+}
+
+let _shadowTex = null;
+function shadowTexture() {
+  if (_shadowTex) return _shadowTex;
+  const c = document.createElement("canvas"); c.width = c.height = 128;
+  const g = c.getContext("2d");
+  const grad = g.createRadialGradient(64, 64, 4, 64, 64, 64);
+  grad.addColorStop(0, "rgba(0,0,0,0.9)"); grad.addColorStop(0.5, "rgba(0,0,0,0.45)"); grad.addColorStop(1, "rgba(0,0,0,0)");
+  g.fillStyle = grad; g.fillRect(0, 0, 128, 128);
+  _shadowTex = new THREE.CanvasTexture(c); return _shadowTex;
 }

@@ -49,5 +49,18 @@ export const music = {
     a.play().catch(() => {});
     this.el = a;
   },
-  duck(on) { if (this.el) this.el.volume = on ? 0.12 : 0.35; },
+  duck(on) { if (this.el) this.el.volume = on ? 0.12 : 0.35; if (this.amb) this.amb.volume = on ? 0.15 : 0.45; },
+  // Per-world ambience loop (wind over the lake, candles in the hall). Crossfades on world change.
+  amb: null, ambUrl: null,
+  ambience(url) {
+    if (url === this.ambUrl) return;
+    this.ambUrl = url;
+    const old = this.amb; this.amb = null;
+    if (old) { const fade = setInterval(() => { old.volume = Math.max(0, old.volume - 0.05); if (old.volume <= 0) { old.pause(); clearInterval(fade); } }, 80); }
+    if (!url) return;
+    const a = new Audio(url); a.loop = true; a.volume = 0;
+    a.play().catch(() => {});
+    this.amb = a;
+    const up = setInterval(() => { if (this.amb !== a) return clearInterval(up); a.volume = Math.min(0.45, a.volume + 0.03); if (a.volume >= 0.45) clearInterval(up); }, 80);
+  },
 };

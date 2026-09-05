@@ -5,6 +5,7 @@ import * as THREE from "three";
 export const WORLDS = {
   castle3: {
     name: "Hogwarts",
+    ambience: "/audio/amb-castle.mp3",
     url: "/worlds/castle3.spz",
     paged: false,
     quaternion: [1, 0, 0, 0],
@@ -18,6 +19,7 @@ export const WORLDS = {
   hall3: {
     name: "Great Hall",
     candles: true,
+    ambience: "/audio/amb-hall.mp3",
     url: "/worlds/hall3.spz",
     paged: false,
     quaternion: [1, 0, 0, 0],

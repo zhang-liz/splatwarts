@@ -28,8 +28,13 @@ addEventListener("resize", () => {
 });
 const spark = new SparkRenderer({ renderer, pagedExtSplats: true, coneFov0: 70, coneFov: 120, behindFoveate: 0.2, coneFoveate: 0.4 });
 scene.add(spark);
-scene.add(new THREE.HemisphereLight(0xffffff, 0x554433, 1.2));
+const hemi = new THREE.HemisphereLight(0xffffff, 0x554433, 1.2); scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xffffff, 1.5); sun.position.set(5, 10, 2); scene.add(sun);
+// Match prop lighting to the splat scene: cool daylight outside, warm candlelight inside.
+function lightFor(mode) {
+  if (mode === "walk") { hemi.color.set(0xffd9a8); hemi.groundColor.set(0x5a3a20); hemi.intensity = 1.0; sun.color.set(0xffc27a); sun.intensity = 0.7; sun.position.set(0, 10, -3); }
+  else { hemi.color.set(0xdfeaff); hemi.groundColor.set(0x554433); hemi.intensity = 1.2; sun.color.set(0xfff1dd); sun.intensity = 1.5; sun.position.set(5, 10, 2); }
+}
 
 const post = new Post(renderer, scene, camera);
 const broom = new Broom(camera, canvas);
@@ -131,7 +136,7 @@ function setup(R) {
     hintEl.textContent = "WASD walk · E talk · V voice spells on/off · 1 Lumos · 2 Incendio · 3 Patronum · 4 Expelliarmus · 5 Leviosa · 6 Reducto · 0 Nox · Orange pad: broom";
   }
   spells.setScale(R, mode === "walk" ? ((world.eye ?? 0) - world.floorY) : null); spells.enabled = true; spells.nox();
-  post.look(mode);
+  post.look(mode); lightFor(mode); music.ambience(world.ambience ?? null);
   restart();
   fade.style.opacity = 0;
   switching = false;
@@ -182,10 +187,11 @@ renderer.setAnimationLoop(() => {
       if (intro) {
         if (broom.enabled) { intro = false; broom.reset(); }
         else {
-          // slow orbit around the castle, looking in, until the first click
-          const R = world.radius, a = Math.PI + time * 0.1;
-          broom.rig.position.set(Math.sin(a) * R * 0.5, R * 0.12 + Math.sin(time * 0.3) * R * 0.02, Math.cos(a) * R * 0.5);
-          broom.yaw = Math.atan2(-broom.rig.position.x, -broom.rig.position.z); broom.pitch = -0.12;
+          // hero shot until the first click: the photo's own viewpoint, a slow push toward
+          // the castle with a little drift, then it loops back
+          const R = world.radius, sp = broom.spawn.position, k = (time * 0.012) % 1;
+          broom.rig.position.set(sp[0] + Math.sin(time * 0.25) * R * 0.03, sp[1] + R * 0.02 + Math.sin(time * 0.17) * R * 0.015, sp[2] - k * R * 0.25);
+          broom.yaw = broom.spawn.yaw + Math.sin(time * 0.11) * 0.06; broom.pitch = -0.04;
         }
       }
       broom.update(dt);
