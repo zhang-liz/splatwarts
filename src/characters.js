@@ -120,7 +120,7 @@ export class Characters {
       }));
       // Natural idle for everyone: Mixamo idle while ambient and attending, a nod while talking.
       console.log("Clips", item.name, Object.keys(item.clips));
-      this.enter(item, "ambient");
+      item.state = null; this.enter(item, "ambient"); // the clip only starts on a state change
     } catch (e) { console.warn("Character load failed", item.name, e); }
   }
   // Switch state. Clip states fade in from the relaxed pose; "attend" fades everything out.
