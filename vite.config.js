@@ -28,6 +28,18 @@ export default defineConfig({
         rewrite: () => "/fal-ai/bytedance/seedream/v4/edit",
         headers: { Authorization: `Key ${envKey("fal-api-key")}` },
       },
+      "/api/nb": {
+        target: "https://fal.run",
+        changeOrigin: true,
+        rewrite: () => "/fal-ai/nano-banana/edit",
+        headers: { Authorization: `Key ${envKey("fal-api-key")}` },
+      },
+      "/api/upscale": {
+        target: "https://fal.run",
+        changeOrigin: true,
+        rewrite: () => "/fal-ai/aura-sr",
+        headers: { Authorization: `Key ${envKey("fal-api-key")}` },
+      },
       "/api/llm": {
         target: "https://fal.run",
         changeOrigin: true,

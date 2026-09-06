@@ -27,7 +27,8 @@ export class Photo {
     this.againBtn.addEventListener("click", () => this.reset());
     this.closeBtn.addEventListener("click", () => this.close());
     this.onClose = null;
-    this.robes = new URLSearchParams(location.search).has("robes");
+    this.robes = !new URLSearchParams(location.search).has("plain"); // ?plain=1 keeps your own clothes
+    this.fast = new URLSearchParams(location.search).has("fast"); // skip the upscale
   }
   get open() { return !this.box.hidden; }
   async start(sceneName) {
@@ -121,16 +122,37 @@ export class Photo {
     for (let i = 0; i < 160 && !this.frame; i++) await new Promise((r) => setTimeout(r, 50));
     if (!this.frame) { this.status.textContent = "Could not grab the scene."; this.busy = false; this.snapBtn.hidden = false; return; }
     this.status.textContent = "Developing the photo…";
-    const outfit = this.robes ? "Dress the person in black Hogwarts school robes with a house scarf." : "Keep the person's identity, face, hair and clothes recognisable, but relight them completely with the scene's light: warm lamplight and candle glow on skin and clothes, cool blue dusk on the shadow side, soft contact shadows on the ground under their feet.";
-    const withFriend = friend ? ` Image 3 is ${whoName}, a real actor in costume: keep their face, age, hair, glasses, scar, robes and colours exactly as in image 3. Put the person from image 2 and ${whoName} standing side by side, close together like friends posing for a photo, both looking at the camera.` : "";
-    const prompt = `Image 1 is a scene: ${this.sceneName}. Image 2 is a photo of a real person. Make one photorealistic live-action film still, shot on a cinema camera, of that same real person standing in the scene from image 1, at the spot the camera is looking at, seen from the same viewpoint as image 1.${withFriend} Three-quarter view, natural relaxed pose. ${outfit} Everyone must look like real human beings with real skin, hair and fabric, not CGI, not a 3D render, not a cartoon. Remove any simple low-detail 3D figures already standing in the scene. Match the scene's lighting, colour, shadows, depth of field and film grain so everyone looks truly present there. Apply one uniform film grain, softness and colour grade across the people and the background so nothing looks cut out or pasted in; the people must not be sharper or brighter than the set. Do not change the scene's layout or add text.`;
+    // Robes by default: the re-render is far more convincing when the model redraws the
+    // clothes with the scene's light. ?plain=1 keeps the person's own clothes.
+    const outfit = this.robes ? "Keep the person's face and hair recognisable, and dress them in black Hogwarts school robes with a house tie over their own top." : "Keep the person's face, hair and clothes recognisable.";
+    const withFriend = friend ? ` Image 3 is ${whoName}, a real actor in costume: keep their face, age, hair, glasses, scar, robes and colours exactly as in image 3. Put the person from image 2 and ${whoName} standing together, body turned slightly toward each other, both looking at the camera with natural smiles.` : " The person stands alone, three-quarter view, looking at the camera with a natural smile.";
+    const prompt = `Image 1 is the set: ${this.sceneName}. Image 2 is a photo of a real person.${withFriend} Photograph them inside the set from image 1, seen from the same viewpoint as image 1, as one photorealistic live-action film still shot on a cinema camera. Do not cut and paste anyone: re-render the person from scratch in a new standing pose, feet planted on the floor. ${outfit} Light everyone with the scene: its lamplight and candle glow on skin and clothes, soft contact shadows under their feet, the same colour temperature, depth of field, softness and film grain as the set, so they belong to the photograph. Real skin, real fabric, not CGI, not a render. Remove any simple low-detail 3D figures already in the set. Do not change the set's layout or add text.`;
     const image_urls = friend ? [this.frame, you, friend] : [this.frame, you];
     try {
-      const r = await fetch("/api/edit", { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, image_urls, image_size: { width: 1920, height: 1080 }, num_images: 1, enable_safety_checker: false }) });
-      const j = await r.json();
-      const url = j.images?.[0]?.url;
-      if (!url) throw new Error(JSON.stringify(j).slice(0, 200));
+      let url = null;
+      // Nano Banana keeps the face best; then a 4x upscale for a print-size still.
+      // Seedream is the fallback when either step fails. ?fast=1 skips the upscale.
+      try {
+        const r = await fetch("/api/nb", { method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt, image_urls, num_images: 1, output_format: "jpeg" }) });
+        const j = await r.json();
+        url = j.images?.[0]?.url || null;
+        if (!url) throw new Error(JSON.stringify(j).slice(0, 200));
+        if (!this.fast) {
+          this.status.textContent = "Sharpening…";
+          const u = await fetch("/api/upscale", { method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ image_url: url, upscaling_factor: 4, overlapping_tiles: true }) });
+          const uj = await u.json();
+          url = uj.image?.url || uj.images?.[0]?.url || url;
+        }
+      } catch (e) {
+        console.warn("nano banana failed, falling back to seedream", e);
+        const r = await fetch("/api/edit", { method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt, image_urls, image_size: { width: 1920, height: 1080 }, num_images: 1, enable_safety_checker: false }) });
+        const j = await r.json();
+        url = j.images?.[0]?.url;
+        if (!url) throw new Error(JSON.stringify(j).slice(0, 200));
+      }
       this.result.src = url; this.result.hidden = false; this.video.hidden = true; this.still.hidden = true;
       this.saveBtn.href = url; this.saveBtn.hidden = false; this.againBtn.hidden = false;
       this.status.textContent = "";
