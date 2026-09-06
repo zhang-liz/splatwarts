@@ -14,6 +14,35 @@ const CLIPS = {
 };
 const clipUrl = (name, id) => `/characters/${name.toLowerCase()}-a${id}.glb`;
 
+// Shared idle motion: the Mixamo "idle" and "agree" clips that ship with three.js's Xbot,
+// retargeted by bone name onto each Meshy rig (same Mixamo skeleton names).
+const USE_IDLE = new URLSearchParams(location.search).has("idle"); // off: the plain name retarget twists the arms
+let idleClips = null;
+function loadIdle(loader) {
+  idleClips ??= (async () => {
+    try {
+      const g = await loader.loadAsync("/models/xbot.glb");
+      const pick = (n) => g.animations.find((c) => c.name === n) || null;
+      return { idle: pick("idle"), nod: pick("agree") };
+    } catch (e) { console.warn("idle clips failed", e); return {}; }
+  })();
+  return idleClips;
+}
+function retarget(clip, model) {
+  if (!clip) return null;
+  const tracks = [], byName = new Map();
+  model.traverse((o) => { if (o.isBone) byName.set(o.name.toLowerCase(), o); }); // Meshy: "neck", "Spine02"
+  for (const t of clip.tracks) {
+    if (!t.name.endsWith(".quaternion")) continue; // rotations only: positions are in Mixamo's scale
+    const bone = t.name.replace(/^mixamorig:?/, "").replace(".quaternion", "");
+    if (bone === "Hips") continue; // keeps the character facing where we turned it
+    const target = byName.get(bone.toLowerCase()) || byName.get(bone.replace(/Spine(\d)$/, "Spine0$1").toLowerCase());
+    if (!target) continue;
+    const c = t.clone(); c.name = `${target.name}.quaternion`; tracks.push(c);
+  }
+  return tracks.length ? new THREE.AnimationClip(clip.name, clip.duration, tracks) : null;
+}
+
 export class Characters {
   constructor(scene, list, R, height) {
     this.scene = scene; this.group = new THREE.Group(); scene.add(this.group);
@@ -61,6 +90,13 @@ export class Characters {
           if (g.animations?.[0]) item.clips[key] = g.animations[0];
         } catch (e) { console.warn("clip failed", item.name, key, e); }
       }));
+      // Natural idle for everyone: Mixamo idle while ambient and attending, a nod while talking.
+      if (USE_IDLE) {
+        const idle = await loadIdle(loader);
+        item.clips.ambient ??= retarget(idle.idle, m);
+        item.clips.attend ??= item.clips.ambient;
+        item.clips.talk ??= retarget(idle.nod, m);
+      }
       console.log("Clips", item.name, Object.keys(item.clips));
       this.enter(item, "ambient");
     } catch (e) { console.warn("Character load failed", item.name, e); }
