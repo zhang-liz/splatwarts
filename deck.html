@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Splatwarts deck</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; background: #000; color: #f3e6c4; font-family: Georgia, "Times New Roman", serif; overflow: hidden; }
+  .slide { position: absolute; inset: 0; display: none; }
+  .slide.on { display: block; }
+  .hero { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .title { position: absolute; left: 0; right: 0; bottom: 8vh; text-align: center; text-shadow: 0 0 40px #ffb84d, 0 4px 14px #000; }
+  .title h1 { font-size: 9vw; letter-spacing: 0.14em; margin: 0; }
+  .title p { font-size: 2.2vw; margin: 1vh 0 0; letter-spacing: 0.06em; opacity: 0.92; }
+  .pair { display: flex; gap: 2vw; height: 100%; padding: 3vh 3vw; box-sizing: border-box; align-items: center; justify-content: center; }
+  .pair figure { margin: 0; height: 100%; display: flex; flex-direction: column; align-items: center; }
+  .pair img { height: calc(100% - 4.5vh); width: auto; max-width: 46vw; object-fit: contain; border-radius: 6px; box-shadow: 0 10px 40px rgba(0,0,0,0.7); }
+  .pair figcaption { font-size: 1.8vw; margin-top: 1vh; letter-spacing: 0.04em; }
+  .bullets { padding: 8vh 9vw; box-sizing: border-box; height: 100%; }
+  .bullets h2 { font-size: 4.2vw; margin: 0 0 4vh; letter-spacing: 0.1em; text-shadow: 0 0 30px #ffb84d; }
+  .bullets ul { list-style: none; padding: 0; margin: 0; columns: 2; column-gap: 6vw; }
+  .bullets li { font-size: 2.1vw; line-height: 1.9; break-inside: avoid; white-space: nowrap; }
+  .bullets b { color: #ffb84d; }
+  .n { position: fixed; right: 2vw; bottom: 2vh; font-size: 1.2vw; opacity: 0.5; }
+</style>
+</head>
+<body>
+  <section class="slide on">
+    <img class="hero" src="samples/set-hall4.jpg" alt="The Great Hall set">
+    <div class="title"><h1>SPLATWARTS</h1><p>One photo of a film set. Walk it, light it, shoot yourself in it.</p></div>
+  </section>
+  <section class="slide">
+    <div class="pair">
+      <figure><img src="samples/photo-great-hall.jpg" alt="With Hermione in the Great Hall"><figcaption>With Hermione · the Great Hall</figcaption></figure>
+      <figure><img src="samples/platform-934-hd-1.jpg" alt="With Harry on Platform 9 3/4"><figcaption>With Harry · Platform 9¾</figcaption></figure>
+    </div>
+  </section>
+  <section class="slide">
+    <div class="bullets">
+      <h2>SPONSORS</h2>
+      <ul>
+        <li><b>World Labs Marble</b> · 3 sets · photo → panorama → splat</li>
+        <li><b>Tripo</b> · broom · Patronus stag · characters</li>
+        <li><b>Spark</b> · splat render · depth of field · live splat edits</li>
+        <li><b>Seedream</b> · set cleanup · panorama enhance · photo composites</li>
+        <li><b>Nano Banana</b> · HD stills · 4x upscale</li>
+        <li><b>Claude · ElevenLabs</b> · dialogue · voices</li>
+        <li><b>Stable Audio</b> · music · ambience · spell sounds</li>
+        <li><b>Track</b> · Creative 3D &amp; VFX</li>
+      </ul>
+    </div>
+  </section>
+  <div class="n">1 / 3</div>
+  <script>
+    const slides = [...document.querySelectorAll(".slide")], n = document.querySelector(".n");
+    let i = 0;
+    const show = (k) => { i = (k + slides.length) % slides.length; slides.forEach((s, j) => s.classList.toggle("on", j === i)); n.textContent = `${i + 1} / ${slides.length}`; };
+    addEventListener("keydown", (e) => { if (["ArrowRight", "Space", "PageDown", "Enter"].includes(e.code)) show(i + 1); if (["ArrowLeft", "PageUp"].includes(e.code)) show(i - 1); });
+    addEventListener("click", () => show(i + 1));
+  </script>
+</body>
+</html>
