@@ -1,8 +1,11 @@
 // Photo mode: press C anywhere, a 3-2-1 countdown, then your webcam frame and the
 // current game frame go to Seedream edit, which puts you into the scene as one
 // photoreal film still. The dev server proxies /api/edit to FAL with the key.
+import * as THREE from "three";
+
 export class Photo {
   constructor() {
+    this.camera = null; this.panoUrl = null; this.plateSize = [1920, 1080];
     this.box = document.getElementById("photo");
     this.video = this.box.querySelector(".cam");
     this.result = this.box.querySelector(".result");
@@ -67,6 +70,32 @@ export class Photo {
     const b = await (await fetch(`/characters/photo/${name.toLowerCase()}.jpg`)).blob();
     return new Promise((res) => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(b); });
   }
+  // Photoreal backdrop: the enhanced panorama the set was generated from, cropped at the
+  // camera's current view. The live splat frame is the fallback when there is no panorama.
+  async plate() {
+    if (!this.panoUrl || !this.camera) return null;
+    try {
+      if (this.panoUrl !== this.panoLoaded) {
+        const tex = await new THREE.TextureLoader().loadAsync(this.panoUrl);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        if (!this.plateRenderer) {
+          const c = document.createElement("canvas"); c.width = this.plateSize[0]; c.height = this.plateSize[1];
+          this.plateRenderer = new THREE.WebGLRenderer({ canvas: c, antialias: true, preserveDrawingBuffer: true });
+          this.plateScene = new THREE.Scene();
+          const geo = new THREE.SphereGeometry(10, 96, 48); geo.scale(-1, 1, 1);
+          this.plateMesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial()); this.plateMesh.rotation.y = Math.PI / 2;
+          this.plateScene.add(this.plateMesh);
+          this.plateCam = new THREE.PerspectiveCamera(60, this.plateSize[0] / this.plateSize[1], 0.1, 100);
+        }
+        this.plateMesh.material.map?.dispose(); this.plateMesh.material.map = tex; this.plateMesh.material.needsUpdate = true;
+        this.panoLoaded = this.panoUrl;
+      }
+      this.plateCam.fov = this.camera.fov; this.plateCam.updateProjectionMatrix();
+      this.camera.getWorldQuaternion(this.plateCam.quaternion);
+      this.plateRenderer.render(this.plateScene, this.plateCam);
+      return this.plateRenderer.domElement.toDataURL("image/jpeg", 0.92);
+    } catch (e) { console.warn("plate", e); return null; }
+  }
   async snap() {
     if (this.busy || (!this.stream && !this.uploaded)) return;
     this.busy = true; this.snapBtn.hidden = true;
@@ -83,6 +112,8 @@ export class Photo {
     }
     const whoName = this.who.value;
     const friend = await this.companion(whoName).catch(() => null);
+    const plate = await this.plate();
+    if (plate) this.frame = plate;
     for (let i = 0; i < 160 && !this.frame; i++) await new Promise((r) => setTimeout(r, 50));
     if (!this.frame) { this.status.textContent = "Could not grab the scene."; this.busy = false; this.snapBtn.hidden = false; return; }
     this.status.textContent = "Developing the photo…";

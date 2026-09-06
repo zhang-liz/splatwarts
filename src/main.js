@@ -55,7 +55,7 @@ canvas.addEventListener("click", () => { if (dialogue.open) { dialogue.close(); 
 // ---- current world state ----
 let world = null, splat = null, rings = null, chars = null, pad = null, door = null, candles = null;
 let intro = false; // camera orbits the castle until the broom is first mounted
-let mode = "fly", state = "loading", t0 = 0, elapsed = 0;
+let mode = "fly", state = "loading", t0 = 0, elapsed = 0, worldKey = null;
 let switching = false;
 const stage = new THREE.Group(); scene.add(stage); // everything that belongs to one world
 
@@ -78,7 +78,7 @@ function makeDisc(color, r) {
 }
 
 async function loadWorld(key) {
-  switching = true; spells.enabled = false; spells.listen(false);
+  worldKey = key; switching = true; spells.enabled = false; spells.listen(false);
   fade.style.opacity = 1;
   await new Promise((r) => setTimeout(r, 650));
   // tear down
@@ -134,7 +134,7 @@ function setup(R) {
     const ground = measureFloor(splat, R);
     const p = world.pad ?? [0, (ground ?? -R * 0.3) + R * 0.05, R * 0.95];
     pad = makeDisc(0x66ccff, R * 0.1); pad.position.set(...p); stage.add(pad);
-    hintEl.textContent = "Mouse steer · W fly · Shift boost · Space stop · R restart · V voice spells · 1-6 spells · C photo · H cinema · B source · Land on the blue pad to enter the castle";
+    hintEl.textContent = "Mouse steer · W fly · Shift boost · Space stop · R restart · V voice spells · 1-6 spells · C photo · H cinema · B source · [ ] scene · Land on the blue pad to enter the castle";
   } else {
     walker.setScale(R, world.eye ?? 0);
     walker.reset({ position: [0, 0, R * 0.05], yaw: 0 });
@@ -147,9 +147,10 @@ function setup(R) {
     const d = world.door ?? [0, floor, R * 0.5];
     door = makeDisc(0xffaa33, R * 0.07); door.position.set(...d); stage.add(door);
     if (world.candles) candles = new Candles(stage, R, floor, world.eye ?? 0);
-    hintEl.textContent = "WASD walk · E talk · V voice spells on/off · 1 Lumos · 2 Incendio · 3 Patronum · 4 Expelliarmus · 5 Leviosa · 6 Reducto · 0 Nox · C photo · H cinema · B source · Orange pad: broom";
+    hintEl.textContent = "WASD walk · E talk · V voice spells on/off · 1 Lumos · 2 Incendio · 3 Patronum · 4 Expelliarmus · 5 Leviosa · 6 Reducto · 0 Nox · C photo · H cinema · B source · [ ] scene · Orange pad: broom";
   }
   spells.setScale(R, mode === "walk" ? ((world.eye ?? 0) - world.floorY) : null); spells.enabled = true; spells.nox();
+  photo.camera = camera; photo.panoUrl = world.url.replace(/(-500k)?\.spz$/, "-ref.png");
   post.look(mode); lightFor(mode); music.ambience(world.ambience ?? null);
   // Subtle depth of field on the splats: sharp where the player looks, the smeared rim softens.
   spark.focalDistance = mode === "walk" ? R * 0.45 : R * 0.6;
@@ -191,6 +192,10 @@ addEventListener("keydown", (e) => {
     photo.start(world.photoPrompt ?? world.name);
   }
   if (e.code === "KeyH") document.body.classList.toggle("cinema");
+  if ((e.code === "BracketRight" || e.code === "BracketLeft") && !switching && !dialogue.open && !photo.open) {
+    const keys = ["castle4", "hall4", "alley2"]; const i = Math.max(0, keys.indexOf(worldKey));
+    loadWorld(keys[(i + (e.code === "BracketRight" ? 1 : keys.length - 1)) % keys.length]);
+  }
   if (e.code === "KeyB" && world) {
     const box = document.getElementById("source"); box.hidden = !box.hidden;
     if (!box.hidden) {
