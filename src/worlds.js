@@ -52,6 +52,55 @@ export const WORLDS = {
     characters: [],
     credit: "Marble 1.1 Plus from a photo of the film's Diagon Alley set, cleaned up with Seedream",
   },
+  hall4: {
+    name: "Great Hall",
+    photoPrompt: "the candle-lit Great Hall of Hogwarts with long wooden tables and a night-sky ceiling",
+    candles: true,
+    ambience: "/audio/amb-hall.mp3",
+    url: "/worlds/hall4.spz",
+    paged: false,
+    quaternion: [1, 0, 0, 0],
+    background: "#0b0a14",
+    radius: null,
+    mode: "walk",
+    eye: 0,
+    floor: null,
+    door: null,
+    next: "alley2",
+    characters: null,
+    credit: "Marble 1.1 Plus from an enhanced panorama of the film's Great Hall set",
+  },
+  alley2: {
+    name: "Diagon Alley",
+    photoPrompt: "Diagon Alley at night, a cobbled wizard shopping street with glowing shop windows",
+    ambience: "/audio/amb-alley.mp3",
+    url: "/worlds/alley2.spz",
+    paged: false,
+    quaternion: [1, 0, 0, 0],
+    background: "#0b0a14",
+    radius: null,
+    mode: "walk",
+    eye: 0,
+    floor: null,
+    door: null,
+    next: "castle4",
+    characters: [],
+    credit: "Marble 1.1 Plus from an enhanced panorama of the film's Diagon Alley set",
+  },
+  castle4: {
+    name: "Hogwarts",
+    photoPrompt: "the Hogwarts castle on its cliff above the lake at dusk, seen from over the water",
+    ambience: "/audio/amb-castle.mp3",
+    url: "/worlds/castle4.spz",
+    paged: false,
+    quaternion: [1, 0, 0, 0],
+    background: "#1a1a2e",
+    radius: null,
+    mode: "fly",
+    pad: null,
+    next: "hall4",
+    credit: "Marble 1.1 Plus from an enhanced panorama of the film's castle model",
+  },
   castle2: {
     name: "Castle",
     url: "/worlds/castle2.spz",
@@ -100,7 +149,8 @@ export const WORLDS = {
 };
 
 WORLDS.hall3.characters = WORLDS.hall.characters;
-export const START = "castle3";
+WORLDS.hall4.characters = WORLDS.hall.characters;
+export const START = "castle4";
 
 // ?world=hall picks a world. ?r=20 overrides the radius. ?pad=x,y,z and ?door=x,y,z override spots.
 export function worldFromQuery(key) {

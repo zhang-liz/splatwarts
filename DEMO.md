@@ -45,9 +45,9 @@ Walk through the orange door at the far end. Fade. Diagon Alley at night.
 "Built today. Any set you can photograph, you can walk and shoot in. Go take a picture."
 
 ## If something breaks
-- Any world: `?world=castle3`, `?world=hall3`, `?world=alley` in the URL. Add `&q=500k` on a weak laptop, `&flat=1` to drop the film look.
+- Any world: `?world=castle4`, `?world=hall4`, `?world=alley2` in the URL (the older, softer `castle3`, `hall3`, `alley` still work). Add `&q=500k` on a weak laptop, `&flat=1` to drop the film look.
 - Photo mode: needs camera permission once. Upload a photo works without a camera. `&robes=1` dresses you in Hogwarts robes.
 - Talk box stuck: click the scene or the Walk away button.
 
 ## Keys
-Fly: mouse steer, W fly, Shift boost, Space stop, R restart. Walk: WASD, E talk, Esc leave. C photo anywhere. Spells: V voice toggle, 1 Lumos, 2 Incendio, 3 Patronum, 4 Expelliarmus, 5 Leviosa, 6 Reducto, 0 Nox. P prints your position.
+Fly: mouse steer, W fly, Shift boost, Space stop, R restart. Walk: WASD, E talk, Esc leave. C photo anywhere. H cinema mode (no HUD, letterbox) for recording. Spells: V voice toggle, 1 Lumos, 2 Incendio, 3 Patronum, 4 Expelliarmus, 5 Leviosa, 6 Reducto, 0 Nox. P prints your position.

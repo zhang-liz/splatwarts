@@ -51,12 +51,18 @@
     #title .credits { position: absolute; bottom: 28px; font-size: 14px; opacity: 0.6; max-width: 80vw; }
     #title.gone { opacity: 0; }
     body.intro #msg, body.intro #hint { visibility: hidden; }
+    /* Cinema mode (H): no HUD, 2.39:1 letterbox, for shooting the demo video */
+    body.cinema #hud, body.cinema #hint { display: none; }
+    .bar { position: fixed; left: 0; right: 0; height: 0; background: #000; z-index: 4; pointer-events: none; transition: height 0.6s; }
+    .bar.top { top: 0; } .bar.bottom { bottom: 0; }
+    body.cinema .bar { height: calc((100vh - 100vw / 2.39) / 2); }
     @keyframes blink { 50% { opacity: 0.3; } }
     #listen { position: absolute; bottom: 48px; left: 50%; transform: translateX(-50%); font-size: 15px; opacity: 0.7; color: #ffd166; font-style: italic; }
   </style>
 </head>
 <body class="intro">
   <canvas id="canvas" tabindex="0"></canvas>
+  <div class="bar top"></div><div class="bar bottom"></div>
   <div id="hud">
     <div id="timer">0.00</div>
     <div id="rings">0 / 10</div>
