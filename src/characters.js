@@ -17,14 +17,17 @@ const clipUrl = (name, id) => `/characters/${name.toLowerCase()}-a${id}.glb`;
 // Shared idle motion: the Mixamo "idle" and "agree" clips that ship with three.js's Xbot,
 // retargeted by bone name onto each Meshy rig (same Mixamo skeleton names).
 const USE_IDLE = !new URLSearchParams(location.search).has("noidle"); // ?noidle=1 keeps them perfectly still
-const IDENT = new THREE.Quaternion(), AMP = 0.6;
+const IDENT = new THREE.Quaternion(), AMP = 0.8;
 let idleClips = null;
 function loadIdle(loader) {
   idleClips ??= (async () => {
     try {
       const g = await loader.loadAsync("/models/xbot.glb");
       const pick = (n) => g.animations.find((c) => c.name === n) || null;
-      return { idle: pick("idle"), nod: pick("agree"), scene: g.scene };
+      const rest = new Map(); g.scene.traverse((o) => { if (o.isBone) rest.set(o, o.quaternion.clone()); });
+      const out = { idle: pick("idle"), nod: pick("agree"), scene: g.scene, rest, all: g.animations };
+      window.__idle = out; // debug handle
+      return out;
     } catch (e) { console.warn("idle clips failed", e); return {}; }
   })();
   return idleClips;
@@ -32,20 +35,25 @@ function loadIdle(loader) {
 // World-space delta retarget: for every matching bone, take how much the Xbot bone rotated
 // away from its rest pose (in world space) and apply that same rotation to our bone's rest
 // pose. Works even though the two rigs have different local bone axes. Rotations only.
-function retarget(clip, model, src) {
+const IDLE_SKIP = /^(hips|.*upleg|.*leg|.*foot|.*toebase)$/i; // upper body only: feet stay planted
+function retarget(clip, model, src, srcRest) {
   if (!clip || !src) return null;
   const canon = (n) => n.replace(/^mixamorig:?/, "").replace(/^Spine0(\d)$/, "Spine$1").toLowerCase();
   const srcBones = new Map(); src.traverse((o) => { if (o.isBone) srcBones.set(canon(o.name), o); });
   const order = []; model.traverse((o) => { if (o.isBone) order.push(o); }); // parents before children
-  src.updateMatrixWorld(true); model.updateMatrixWorld(true);
+  // Deltas are measured from the clip's first frame, not from Xbot's T-pose, and applied on
+  // top of our relaxed pose: the motion is "how the idle moves around its own neutral stance".
+  for (const [b, rq] of srcRest) b.quaternion.copy(rq);
+  const mixer = new THREE.AnimationMixer(src); mixer.clipAction(clip).play();
+  mixer.setTime(0); src.updateMatrixWorld(true); model.updateMatrixWorld(true);
   const q = new THREE.Quaternion(), pairs = [];
   for (const t of order) {
+    if (IDLE_SKIP.test(t.name)) continue;
     const sb = srcBones.get(canon(t.name)); if (!sb) continue;
     pairs.push({ t, s: sb, sBindInv: sb.getWorldQuaternion(new THREE.Quaternion()).invert(), tBind: t.getWorldQuaternion(new THREE.Quaternion()), rest: t.quaternion.clone(), values: [] });
   }
   if (!pairs.length) return null;
   const fps = 30, n = Math.max(2, Math.floor(clip.duration * fps)), times = [];
-  const mixer = new THREE.AnimationMixer(src); mixer.clipAction(clip).play();
   const pw = new THREE.Quaternion(), wq = new THREE.Quaternion();
   for (let f = 0; f < n; f++) {
     const time = f / fps; times.push(time);
@@ -98,13 +106,11 @@ export class Characters {
       const s = item.h / size.y; m.scale.setScalar(s);
       m.position.y = -box.min.y * s;
       item.root.remove(item.body); item.root.add(m); item.model = m;
-      if (USE_IDLE) {
-        const idle = await loadIdle(loader);
-        item.clips.ambient ??= retarget(idle.idle, m, idle.scene);
-        item.clips.attend ??= item.clips.ambient;
-        item.clips.talk ??= retarget(idle.nod, m, idle.scene);
-      }
       item.pose = relaxedPose(m);
+      if (USE_IDLE) { // after relaxedPose: the nod moves around the hanging-arms pose while talking
+        const idle = await loadIdle(loader);
+        item.clips.talk ??= retarget(idle.nod, m, idle.scene, idle.rest);
+      }
       item.mixer = new THREE.AnimationMixer(m);
       console.log("Loaded character", item.name);
       // Extra clips share the rig, so they retarget by bone name onto this model.
@@ -190,19 +196,50 @@ function relaxedPose(model) {
     const parentQ = arm.parent.getWorldQuaternion(new THREE.Quaternion());
     arm.quaternion.premultiply(parentQ.clone().invert().multiply(turn).multiply(parentQ));
     arms.push({ bone: arm, sign: Math.sign(now.x) });
+    // then the forearm: hang nearly straight, a little forward, so hands rest by the thighs
+    const hand = model.getObjectByName(side + "Hand");
+    if (hand) {
+      model.updateMatrixWorld(true);
+      const f0 = fore.getWorldPosition(new THREE.Vector3()), h0 = hand.getWorldPosition(new THREE.Vector3());
+      const fnow = h0.sub(f0).normalize();
+      const fwant = new THREE.Vector3(Math.sign(now.x) * 0.1, -1, 0.22).normalize();
+      const fturn = new THREE.Quaternion().setFromUnitVectors(fnow, fwant);
+      const fp = fore.parent.getWorldQuaternion(new THREE.Quaternion());
+      fore.quaternion.premultiply(fp.clone().invert().multiply(fturn).multiply(fp));
+    }
   }
+  model.updateMatrixWorld(true);
   const rest = new Map();
   model.traverse((o) => { if (o.isBone) rest.set(o, o.quaternion.clone()); });
   const spine = model.getObjectByName("Spine02") || model.getObjectByName("Spine");
-  return { arms, spine, rest };
+  const head = model.getObjectByName("Head"), hips = model.getObjectByName("Hips");
+  return { arms, spine, head, hips, rest };
 }
 
-// Ease every bone toward the relaxed pose and hold it still.
+// Ease every bone toward the relaxed pose, then add life on top: breathing, a slow weight
+// shift, a little arm sway, and the head looking around. All small, all in world space, so
+// they read the same on every rig no matter how its bone axes are set up.
+const _p = new THREE.Quaternion(), _r = new THREE.Quaternion(), _ax = new THREE.Vector3();
+function nudge(bone, x, y, z, angle) {
+  if (!bone || !angle) return;
+  bone.parent.getWorldQuaternion(_p);
+  _r.setFromAxisAngle(_ax.set(x, y, z).normalize(), angle);
+  bone.quaternion.premultiply(_p.clone().invert().multiply(_r).multiply(_p));
+}
+const noise = (t, a, b) => (Math.sin(t * a) + Math.sin(t * b + 1.7)) * 0.5; // slow, non-repeating drift
 function settle(pose, dt, t) {
-  const k = Math.min(1, dt * 5), q = new THREE.Quaternion();
-  for (const [bone, rq] of pose.rest) bone.quaternion.slerp(rq, k);
-  // a barely visible breath on the spine only; the arms stay still
-  if (pose.spine) { q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.sin(t * 1.2) * 0.006); pose.spine.quaternion.multiply(q); }
+  // start from the exact rest pose every frame, so the offsets below never stack up;
+  // a fading clip on the mixer still blends over this because it runs after settle
+  for (const [bone, rq] of pose.rest) bone.quaternion.copy(rq);
+  const d = Math.PI / 180;
+  const breath = Math.sin(t * 1.5) * 1.2 * d;           // ~0.24 Hz
+  const shift = noise(t, 0.31, 0.19) * 1.5 * d;          // weight drifting side to side
+  nudge(pose.hips, 0, 0, 1, shift);
+  nudge(pose.spine, 1, 0, 0, breath);
+  nudge(pose.spine, 0, 0, 1, -shift * 0.8);              // counter-lean keeps the head over the feet
+  nudge(pose.head, 0, 1, 0, noise(t, 0.23, 0.41) * 7 * d);
+  nudge(pose.head, 1, 0, 0, noise(t, 0.37, 0.29) * 2.5 * d);
+  for (const a of pose.arms) nudge(a.bone, 1, 0, 0, (Math.sin(t * 1.5 + 1 + a.sign) * 1.2 + noise(t, 0.27, 0.43) * 1.5) * d);
 }
 
 let _shadowTex = null;
