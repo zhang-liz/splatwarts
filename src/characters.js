@@ -16,31 +16,53 @@ const clipUrl = (name, id) => `/characters/${name.toLowerCase()}-a${id}.glb`;
 
 // Shared idle motion: the Mixamo "idle" and "agree" clips that ship with three.js's Xbot,
 // retargeted by bone name onto each Meshy rig (same Mixamo skeleton names).
-const USE_IDLE = new URLSearchParams(location.search).has("idle"); // off: the plain name retarget twists the arms
+const USE_IDLE = !new URLSearchParams(location.search).has("noidle"); // ?noidle=1 keeps them perfectly still
+const IDENT = new THREE.Quaternion(), AMP = 0.6;
 let idleClips = null;
 function loadIdle(loader) {
   idleClips ??= (async () => {
     try {
       const g = await loader.loadAsync("/models/xbot.glb");
       const pick = (n) => g.animations.find((c) => c.name === n) || null;
-      return { idle: pick("idle"), nod: pick("agree") };
+      return { idle: pick("idle"), nod: pick("agree"), scene: g.scene };
     } catch (e) { console.warn("idle clips failed", e); return {}; }
   })();
   return idleClips;
 }
-function retarget(clip, model) {
-  if (!clip) return null;
-  const tracks = [], byName = new Map();
-  model.traverse((o) => { if (o.isBone) byName.set(o.name.toLowerCase(), o); }); // Meshy: "neck", "Spine02"
-  for (const t of clip.tracks) {
-    if (!t.name.endsWith(".quaternion")) continue; // rotations only: positions are in Mixamo's scale
-    const bone = t.name.replace(/^mixamorig:?/, "").replace(".quaternion", "");
-    if (bone === "Hips") continue; // keeps the character facing where we turned it
-    const target = byName.get(bone.toLowerCase()) || byName.get(bone.replace(/Spine(\d)$/, "Spine0$1").toLowerCase());
-    if (!target) continue;
-    const c = t.clone(); c.name = `${target.name}.quaternion`; tracks.push(c);
+// World-space delta retarget: for every matching bone, take how much the Xbot bone rotated
+// away from its rest pose (in world space) and apply that same rotation to our bone's rest
+// pose. Works even though the two rigs have different local bone axes. Rotations only.
+function retarget(clip, model, src) {
+  if (!clip || !src) return null;
+  const canon = (n) => n.replace(/^mixamorig:?/, "").replace(/^Spine0(\d)$/, "Spine$1").toLowerCase();
+  const srcBones = new Map(); src.traverse((o) => { if (o.isBone) srcBones.set(canon(o.name), o); });
+  const order = []; model.traverse((o) => { if (o.isBone) order.push(o); }); // parents before children
+  src.updateMatrixWorld(true); model.updateMatrixWorld(true);
+  const q = new THREE.Quaternion(), pairs = [];
+  for (const t of order) {
+    const sb = srcBones.get(canon(t.name)); if (!sb) continue;
+    pairs.push({ t, s: sb, sBindInv: sb.getWorldQuaternion(new THREE.Quaternion()).invert(), tBind: t.getWorldQuaternion(new THREE.Quaternion()), rest: t.quaternion.clone(), values: [] });
   }
-  return tracks.length ? new THREE.AnimationClip(clip.name, clip.duration, tracks) : null;
+  if (!pairs.length) return null;
+  const fps = 30, n = Math.max(2, Math.floor(clip.duration * fps)), times = [];
+  const mixer = new THREE.AnimationMixer(src); mixer.clipAction(clip).play();
+  const pw = new THREE.Quaternion(), wq = new THREE.Quaternion();
+  for (let f = 0; f < n; f++) {
+    const time = f / fps; times.push(time);
+    mixer.setTime(time); src.updateMatrixWorld(true);
+    for (const p of pairs) {
+      p.s.getWorldQuaternion(wq); wq.multiply(p.sBindInv);          // delta from rest, world space
+      wq.slerp(IDENT, 1 - AMP);                                     // calmer than Xbot's full idle
+      wq.multiply(p.tBind);                                         // our bone's new world rotation
+      p.t.parent.getWorldQuaternion(pw); q.copy(pw).invert().multiply(wq);
+      p.t.quaternion.copy(q); p.t.updateWorldMatrix(false, false);  // children read the new parent
+      p.values.push(q.x, q.y, q.z, q.w);
+    }
+  }
+  for (const p of pairs) p.t.quaternion.copy(p.rest);                // leave the rig as we found it
+  model.updateMatrixWorld(true);
+  const tracks = pairs.map((p) => new THREE.QuaternionKeyframeTrack(`${p.t.name}.quaternion`, times, p.values));
+  return new THREE.AnimationClip(clip.name, clip.duration, tracks);
 }
 
 export class Characters {
@@ -76,6 +98,12 @@ export class Characters {
       const s = item.h / size.y; m.scale.setScalar(s);
       m.position.y = -box.min.y * s;
       item.root.remove(item.body); item.root.add(m); item.model = m;
+      if (USE_IDLE) {
+        const idle = await loadIdle(loader);
+        item.clips.ambient ??= retarget(idle.idle, m, idle.scene);
+        item.clips.attend ??= item.clips.ambient;
+        item.clips.talk ??= retarget(idle.nod, m, idle.scene);
+      }
       item.pose = relaxedPose(m);
       item.mixer = new THREE.AnimationMixer(m);
       console.log("Loaded character", item.name);
@@ -91,12 +119,6 @@ export class Characters {
         } catch (e) { console.warn("clip failed", item.name, key, e); }
       }));
       // Natural idle for everyone: Mixamo idle while ambient and attending, a nod while talking.
-      if (USE_IDLE) {
-        const idle = await loadIdle(loader);
-        item.clips.ambient ??= retarget(idle.idle, m);
-        item.clips.attend ??= item.clips.ambient;
-        item.clips.talk ??= retarget(idle.nod, m);
-      }
       console.log("Clips", item.name, Object.keys(item.clips));
       this.enter(item, "ambient");
     } catch (e) { console.warn("Character load failed", item.name, e); }
