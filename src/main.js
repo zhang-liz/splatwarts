@@ -138,6 +138,7 @@ function setup(R) {
     broom.reset(spawnFor(course, R));
     broom.ready = true;
     intro = !broom.enabled;
+    if (rings) rings.group.visible = !intro; // the title card shows the castle alone
     const ground = measureFloor(splat, R);
     const p = world.pad ?? [0, (ground ?? -R * 0.3) + R * 0.05, R * 0.95];
     pad = makeDisc(0x66ccff, R * 0.1); pad.position.set(...p); stage.add(pad);
@@ -230,7 +231,7 @@ renderer.setAnimationLoop(() => {
   if (!switching && world) {
     if (mode === "fly") {
       if (intro) {
-        if (broom.enabled) { intro = false; broom.reset(); }
+        if (broom.enabled) { intro = false; broom.reset(); if (rings) rings.group.visible = true; }
         else {
           // hero shot until the first click: the photo's own viewpoint, a slow push toward
           // the castle with a little drift, then it loops back

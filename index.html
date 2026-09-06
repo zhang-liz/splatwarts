@@ -50,7 +50,7 @@
     #title .cta { font-size: 20px; margin-top: 40px; opacity: 0.8; animation: blink 1.6s infinite; }
     #title .credits { position: absolute; bottom: 28px; font-size: 14px; opacity: 0.6; max-width: 80vw; }
     #title.gone { opacity: 0; }
-    body.intro #msg, body.intro #hint { visibility: hidden; }
+    body.intro #msg, body.intro #hint, body.intro #hud, body.intro #map { visibility: hidden; } /* clean title card */
     /* Cinema mode (H): no HUD, 2.39:1 letterbox, for shooting the demo video */
     body.cinema #hud, body.cinema #hint, body.cinema #map { display: none; }
     #photo.flash::after { content: ""; position: absolute; inset: 0; background: #fff; animation: flash 0.4s ease-out forwards; pointer-events: none; }
