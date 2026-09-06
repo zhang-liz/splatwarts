@@ -15,6 +15,12 @@ See `DEMO.md` for the 2-minute stage script. `samples/photo-great-hall.jpg` is a
 
 Photo mode: press C. One phone photo of the author, taken at the hackathon under office lights, plus a photoreal companion go to Seedream with the set behind them. About ten seconds later: a live-action film still, relit by the set.
 
+| Platform 9¾, own clothes | Platform 9¾, in robes |
+|---|---|
+| ![Platform 9 3/4](samples/platform-934-1.jpg) | ![Platform 9 3/4 in robes](samples/platform-934-4.jpg) |
+
+Same pipeline, no set needed: one phone photo plus the Harry reference, and Seedream builds the whole shot.
+
 | Hogwarts (fly) | Great Hall (walk) | Diagon Alley (walk) |
 |---|---|---|
 | ![Hogwarts set](samples/set-castle4.jpg) | ![Great Hall set](samples/set-hall4.jpg) | ![Diagon Alley set](samples/set-alley2.jpg) |
