@@ -13,7 +13,7 @@ See `DEMO.md` for the 2-minute stage script. `samples/photo-great-hall.jpg` is a
 |---|---|
 | ![Photo mode, Great Hall](samples/photo-great-hall.jpg) | ![Photo mode, Diagon Alley](samples/photo-diagon-alley.jpg) |
 
-Photo mode: press C, a webcam frame or an uploaded portrait plus a photoreal companion go to Seedream with the set behind you. About ten seconds later you have a live-action film still.
+Photo mode: press C. One phone photo of the author, taken at the hackathon under office lights, plus a photoreal companion go to Seedream with the set behind them. About ten seconds later: a live-action film still, relit by the set.
 
 | Hogwarts (fly) | Great Hall (walk) | Diagon Alley (walk) |
 |---|---|---|
