@@ -9,11 +9,11 @@ See `DEMO.md` for the 2-minute stage script. `samples/photo-great-hall.jpg` is a
 
 ## What it looks like
 
-| You and Harry in the Great Hall | You and Dumbledore in Diagon Alley |
+| The Great Hall feast with Hermione | Ollivanders with Dumbledore |
 |---|---|
-| ![Photo mode, Great Hall](samples/photo-great-hall.jpg) | ![Photo mode, Diagon Alley](samples/photo-diagon-alley.jpg) |
+| ![Great Hall with Hermione](samples/photo-great-hall.jpg) | ![Ollivanders with Dumbledore](samples/photo-ollivanders.jpg) |
 
-Photo mode: press C. One phone photo of the author, taken at the hackathon under office lights, plus a photoreal companion go to Seedream with the set behind them. About ten seconds later: a live-action film still, relit by the set.
+One phone photo of the author, taken at the hackathon under office lights, plus a photoreal companion reference. Nano Banana composites and relights, then a 4x upscale to 3328 x 4992. In the app, press C for the same idea live: the set behind you is the panorama at your exact view angle.
 
 | Platform 9¾, wide (Seedream 4K) | Platform 9¾ (Nano Banana, upscaled 4x) |
 |---|---|
