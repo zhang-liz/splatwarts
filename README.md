@@ -7,6 +7,20 @@ Tech: World Labs Marble 1.1 Plus (sets from photos and enhanced panoramas of the
 
 See `DEMO.md` for the 2-minute stage script. `samples/photo-great-hall.jpg` is a photo-mode result: an uploaded portrait plus Harry, composited into the live Great Hall frame.
 
+## What it looks like
+
+| You and Harry in the Great Hall | You and Dumbledore in Diagon Alley |
+|---|---|
+| ![Photo mode, Great Hall](samples/photo-great-hall.jpg) | ![Photo mode, Diagon Alley](samples/photo-diagon-alley.jpg) |
+
+Photo mode: press C, a webcam frame or an uploaded portrait plus a photoreal companion go to Seedream with the set behind you. About ten seconds later you have a live-action film still.
+
+| Hogwarts (fly) | Great Hall (walk) | Diagon Alley (walk) |
+|---|---|---|
+| ![Hogwarts set](samples/set-castle4.jpg) | ![Great Hall set](samples/set-hall4.jpg) | ![Diagon Alley set](samples/set-alley2.jpg) |
+
+The three sets, seen from the panorama each one was generated from: a photo of the film's model or set, cleaned and enhanced with Seedream, then World Labs Marble 1.1 Plus. In the app they are Gaussian splats you fly and walk through, with a cinema lens, bloom and floating candles.
+
 ## Run
 
 ```
