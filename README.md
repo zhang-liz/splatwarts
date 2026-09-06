@@ -5,7 +5,7 @@ Built for the Spatial Intelligence + Generative 3D Hackathon, 2026-09-05. Track:
 
 Tech: World Labs Marble 1.1 Plus (sets from photos and enhanced panoramas of the film's model and sets), Spark 2 (rendering, depth of field, live splat edits for Lumos and Reducto), Three.js post (bloom, grade, vignette), Seedream via FAL (set cleanup, panorama enhancement, the photo composite), Tripo (broom, stag, characters), Claude and ElevenLabs via FAL (the characters talk), Stable Audio (music, ambience, spell sounds).
 
-See `DEMO.md` for the 2-minute stage script. `samples/photo-great-hall.jpg` is a photo-mode result: an uploaded portrait plus Harry, composited into the live Great Hall frame.
+See `DEMO.md` for the stage script and `HOWTO.md` for a step-by-step guide to building your own. `samples/photo-great-hall.jpg` is a photo-mode result: an uploaded portrait plus Harry, composited into the live Great Hall frame.
 
 ## What it looks like
 
