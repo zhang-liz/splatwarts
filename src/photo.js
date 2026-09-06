@@ -16,7 +16,10 @@ export class Photo {
     this.againBtn = this.box.querySelector(".again");
     this.closeBtn = this.box.querySelector(".close");
     this.still = this.box.querySelector(".still");
+    this.preview = this.box.querySelector(".preview");
+    this.cutouts = {}; this.previewTimer = null;
     this.who = this.box.querySelector(".who");
+    this.who.addEventListener("change", () => this.renderPreview());
     this.uploadBtn = this.box.querySelector(".upload");
     this.file = this.box.querySelector(".file");
     this.uploaded = null; // data URL of a photo the player chose instead of the webcam
@@ -34,6 +37,10 @@ export class Photo {
   async start(sceneName) {
     this.sceneName = sceneName;
     this.box.hidden = false; this.reset();
+    // keep the preview following the player's view while the box is open
+    clearInterval(this.previewTimer);
+    this.previewTimer = setInterval(() => { if (this.open && !this.busy && this.result.hidden) this.renderPreview(); }, 700);
+    this.renderPreview();
     document.exitPointerLock?.();
     try {
       this.stream = this.stream || await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720, facingMode: "user" }, audio: false });
@@ -43,12 +50,13 @@ export class Photo {
   }
   reset() {
     this.result.hidden = true; this.result.removeAttribute("src"); this.video.hidden = false;
+    this.preview.hidden = true; this.video.classList.remove("pip"); this.still.classList.remove("pip");
     this.saveBtn.hidden = true; this.againBtn.hidden = true; this.snapBtn.hidden = false;
     this.still.hidden = !this.uploaded; if (this.uploaded) { this.still.src = this.uploaded; this.video.hidden = true; }
     this.count.textContent = ""; this.status.textContent = "";
   }
   close() {
-    this.box.hidden = true;
+    this.box.hidden = true; clearInterval(this.previewTimer); this.previewTimer = null;
     if (this.stream) { for (const t of this.stream.getTracks()) t.stop(); this.stream = null; }
     this.onClose?.();
   }
@@ -70,6 +78,37 @@ export class Photo {
     if (!name) return null;
     const b = await (await fetch(`/characters/photo/${name.toLowerCase()}.jpg`)).blob();
     return new Promise((res) => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(b); });
+  }
+  // Preview before the shot: the set at the current view, with the chosen character standing
+  // there, arm around a robed mannequin that stands in for the player. The webcam (or the
+  // uploaded photo) shrinks to a corner box.
+  cutout(name) {
+    if (!name) return null;
+    const key = name.toLowerCase();
+    if (!this.cutouts[key]) {
+      const img = new Image(); img.src = `/characters/preview/${key}.png`;
+      this.cutouts[key] = img;
+    }
+    return this.cutouts[key];
+  }
+  async renderPreview() {
+    if (!this.open || this.busy || !this.result.hidden) return;
+    const plate = await this.plate(); if (!plate || this.busy || !this.result.hidden) return;
+    const bg = await new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = plate; });
+    if (!bg) return;
+    const c = this.previewCanvas ||= document.createElement("canvas");
+    c.width = bg.width; c.height = bg.height;
+    const g = c.getContext("2d"); g.drawImage(bg, 0, 0);
+    const cut = this.cutout(this.who.value);
+    const draw = () => {
+      if (cut && cut.complete && cut.naturalWidth) {
+        const h = c.height * 0.8, w = h * cut.naturalWidth / cut.naturalHeight;
+        g.drawImage(cut, (c.width - w) / 2, c.height * 0.96 - h, w, h);
+      }
+      this.preview.src = c.toDataURL("image/jpeg", 0.85); this.preview.hidden = false;
+      this.video.classList.add("pip"); this.still.classList.add("pip");
+    };
+    if (cut && !cut.complete) cut.addEventListener("load", draw, { once: true }); else draw();
   }
   // Photoreal backdrop: the enhanced panorama the set was generated from, cropped at the
   // camera's current view. The live splat frame is the fallback when there is no panorama.
@@ -127,6 +166,7 @@ export class Photo {
       you = c.toDataURL("image/jpeg", 0.92);
     }
     // freeze the shot on screen while it develops, like a camera preview
+    this.preview.hidden = true; this.still.classList.remove("pip"); this.video.classList.remove("pip");
     this.still.src = you; this.still.hidden = false; this.video.hidden = true;
     this.box.classList.add("flash"); setTimeout(() => this.box.classList.remove("flash"), 400);
     this.status.textContent = "Developing the photo…";

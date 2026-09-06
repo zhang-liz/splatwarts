@@ -28,6 +28,10 @@
     #photo[hidden] { display: none; }
     #photo .stage { position: relative; width: min(1100px, 90vw); aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 60px rgba(0,0,0,0.7); }
     #photo .cam, #photo .result { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    /* live preview: the set at your view with the chosen character and a stand-in for you */
+    #photo .preview { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    #photo .preview[hidden] { display: none; }
+    #photo .cam.pip, #photo .still.pip { inset: auto; left: 2vw; bottom: 12vh; width: 22vw; height: auto; aspect-ratio: 16 / 9; border: 2px solid rgba(243,230,196,0.8); border-radius: 8px; box-shadow: 0 8px 30px rgba(0,0,0,0.6); z-index: 2; background: #000; object-fit: cover; }
     #photo .cam { transform: scaleX(-1); }
     #photo .result[hidden], #photo .cam[hidden] { display: none; }
     #photo .count { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 160px; color: #f3e6c4; text-shadow: 0 0 40px #ffb84d, 0 4px 12px #000; pointer-events: none; }
@@ -99,7 +103,8 @@
     </div>
     <div id="photo" hidden>
       <div class="stage">
-        <video class="cam" autoplay playsinline muted></video>
+        <img class="preview" alt="" hidden>
+      <video class="cam" autoplay playsinline muted></video>
         <img class="still" alt="" hidden />
         <img class="result" alt="" />
         <div class="count"></div>
