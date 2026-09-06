@@ -97,6 +97,21 @@ export class Photo {
       return this.plateRenderer.domElement.toDataURL("image/jpeg", 0.92);
     } catch (e) { console.warn("plate", e); return null; }
   }
+  // Background 4x upscale of the photo on screen. Replaces the image and the Save link
+  // only if that same photo is still showing.
+  async sharpen(url) {
+    const token = (this.shot = (this.shot || 0) + 1);
+    try {
+      const u = await fetch("/api/upscale", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image_url: url, upscaling_factor: 4, overlapping_tiles: true }) });
+      const uj = await u.json();
+      const hd = uj.image?.url || uj.images?.[0]?.url;
+      if (hd && token === this.shot && this.result.getAttribute("src") === url) {
+        this.result.src = hd; this.saveBtn.href = hd; this.status.textContent = "HD version ready";
+        setTimeout(() => { if (this.status.textContent === "HD version ready") this.status.textContent = ""; }, 2500);
+      }
+    } catch (e) { console.warn("upscale failed", e); }
+  }
   async snap() {
     if (this.busy || (!this.stream && !this.uploaded)) return;
     this.busy = true; this.snapBtn.hidden = true;
@@ -138,13 +153,8 @@ export class Photo {
         const j = await r.json();
         url = j.images?.[0]?.url || null;
         if (!url) throw new Error(JSON.stringify(j).slice(0, 200));
-        if (!this.fast) {
-          this.status.textContent = "Sharpening…";
-          const u = await fetch("/api/upscale", { method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ image_url: url, upscaling_factor: 4, overlapping_tiles: true }) });
-          const uj = await u.json();
-          url = uj.image?.url || uj.images?.[0]?.url || url;
-        }
+        // show the photo now; the 4x upscale (15 s to 2 min) swaps in when it lands
+        if (!this.fast) this.sharpen(url);
       } catch (e) {
         console.warn("nano banana failed, falling back to seedream", e);
         const r = await fetch("/api/edit", { method: "POST", headers: { "Content-Type": "application/json" },
