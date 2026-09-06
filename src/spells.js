@@ -55,10 +55,11 @@ export class Spells {
       const mat = new THREE.MeshBasicMaterial({ color: 0x8ec6ee, transparent: true, opacity: 0.8, depthWrite: false });
       m.traverse((o) => { if (o.isMesh) o.material = mat; });
       const wrap = new THREE.Group(); wrap.add(m);
-      // The Tripo export from the side-view concept comes in long on x and upside down
-      // (checked in the hall: hooves up, antlers down). Flip it and point the head down +Z,
-      // which is where the wrapper's lookAt aims.
-      if (size.x >= size.z) m.rotation.set(Math.PI, Math.PI / 2, 0);
+      // The Tripo export from the side-view concept comes in long on x, upright. Turn it so
+      // the head points down +Z, which is where the wrapper's lookAt aims. (An earlier X flip
+      // put it hooves-up in the hall.)
+      // The shrunk export is long on z and arrives hooves-up: flip it around its own length.
+      if (size.x >= size.z) m.rotation.set(0, -Math.PI / 2, 0); else m.rotation.set(0, 0, Math.PI);
       this.stag = wrap; this.stagMat = mat;
       console.log("Loaded stag");
     } catch (e) { console.warn("No stag", e); }
