@@ -139,12 +139,12 @@ function relaxedPose(model) {
   return { arms, spine, rest };
 }
 
-// Ease every bone toward the relaxed pose, then add a small breath.
+// Ease every bone toward the relaxed pose and hold it still.
 function settle(pose, dt, t) {
   const k = Math.min(1, dt * 5), q = new THREE.Quaternion();
   for (const [bone, rq] of pose.rest) bone.quaternion.slerp(rq, k);
-  if (pose.spine) { q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.sin(t * 1.6) * 0.02); pose.spine.quaternion.multiply(q); }
-  for (const a of pose.arms) { q.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.sin(t * 1.6 + 1) * 0.02 * a.sign); a.bone.quaternion.multiply(q); }
+  // a barely visible breath on the spine only; the arms stay still
+  if (pose.spine) { q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.sin(t * 1.2) * 0.006); pose.spine.quaternion.multiply(q); }
 }
 
 let _shadowTex = null;
