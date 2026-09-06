@@ -53,6 +53,8 @@
     body.intro #msg, body.intro #hint { visibility: hidden; }
     /* Cinema mode (H): no HUD, 2.39:1 letterbox, for shooting the demo video */
     body.cinema #hud, body.cinema #hint, body.cinema #map { display: none; }
+    #photo.flash::after { content: ""; position: absolute; inset: 0; background: #fff; animation: flash 0.4s ease-out forwards; pointer-events: none; }
+    @keyframes flash { from { opacity: 0.9; } to { opacity: 0; } }
     /* Scene map: click a set to jump there. Esc frees the cursor first while flying or walking. */
     #map { position: fixed; left: 20px; bottom: 64px; display: flex; gap: 8px; z-index: 6; }
     #map button { position: relative; width: 132px; height: 66px; padding: 0; border: 2px solid rgba(243,230,196,0.35); border-radius: 6px; overflow: hidden; background: #000; cursor: pointer; opacity: 0.8; transition: opacity 0.2s, border-color 0.2s; }

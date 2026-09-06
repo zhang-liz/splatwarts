@@ -110,6 +110,10 @@ export class Photo {
       c.getContext("2d").drawImage(this.video, 0, 0, c.width, c.height);
       you = c.toDataURL("image/jpeg", 0.92);
     }
+    // freeze the shot on screen while it develops, like a camera preview
+    this.still.src = you; this.still.hidden = false; this.video.hidden = true;
+    this.box.classList.add("flash"); setTimeout(() => this.box.classList.remove("flash"), 400);
+    this.status.textContent = "Developing the photo…";
     const whoName = this.who.value;
     const friend = await this.companion(whoName).catch(() => null);
     const plate = await this.plate();
