@@ -159,8 +159,9 @@ export function worldFromQuery(key) {
   if (q.get("r")) w.radius = Number(q.get("r"));
   for (const k of ["pad", "door"]) if (q.get(k)) w[k] = q.get(k).split(",").map(Number);
   if (q.get("mode")) w.mode = q.get("mode");            // ?mode=walk to test on foot anywhere
-  if (q.get("q") && w.url.endsWith(".spz")) w.url = w.url.replace(/\.spz$/, `-${q.get("q")}.spz`); // ?q=500k for weak machines
-  w.q = q.get("q") || "";
+  const qv = q.get("q") || import.meta.env.VITE_Q || ""; // ?q=500k for weak machines; VITE_Q=500k on the hosted build
+  if (qv && w.url.endsWith(".spz")) w.url = w.url.replace(/\.spz$/, `-${qv}.spz`);
+  w.q = qv;
   if (w.mode === "walk" && !w.characters) w.characters = WORLDS.hall.characters;
   return w;
 }

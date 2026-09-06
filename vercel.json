@@ -1,0 +1,5 @@
+{
+  "buildCommand": "vite build && find dist/worlds -name '*.spz' ! -name '*-500k.spz' -delete && rm -f dist/worlds/*-pano.png && rm -rf dist/characters/raw dist/models/raw",
+  "outputDirectory": "dist",
+  "framework": "vite"
+}
