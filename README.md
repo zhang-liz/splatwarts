@@ -30,6 +30,12 @@ npm run dev
 
 Open the printed URL. Click to mount the broom.
 
+To share it live without deploying, tunnel the dev server (the FAL proxies keep working):
+
+```
+npx -y cloudflared tunnel --url http://localhost:5173
+```
+
 Controls: mouse steers, W/S speed, Shift boost, Space brake, R restart, P prints your position to the console.
 
 ## Swap the world

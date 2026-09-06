@@ -14,7 +14,7 @@ export default defineConfig({
   // Spark builds its web workers from inline source. Pre-bundling rewrites it and breaks them.
   optimizeDeps: { exclude: ["@sparkjsdev/spark"] },
   server: {
-    port: 5173,
+    port: 5173, host: true, allowedHosts: true,
     proxy: {
       "/api/tts": {
         target: "https://fal.run",
