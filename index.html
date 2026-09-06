@@ -53,6 +53,10 @@
     body.intro #msg, body.intro #hint { visibility: hidden; }
     /* Cinema mode (H): no HUD, 2.39:1 letterbox, for shooting the demo video */
     body.cinema #hud, body.cinema #hint { display: none; }
+    /* Source panel (B): the panorama this set was generated from, for the before/after beat */
+    #source { position: fixed; top: 24px; right: 24px; width: 40vw; z-index: 6; pointer-events: none; color: #f3e6c4; font-size: 14px; text-shadow: 0 2px 6px #000; }
+    #source img { width: 100%; display: block; border: 2px solid rgba(243,230,196,0.7); border-radius: 6px; box-shadow: 0 8px 30px rgba(0,0,0,0.6); }
+    #source .cap { margin-top: 6px; text-align: right; }
     .bar { position: fixed; left: 0; right: 0; height: 0; background: #000; z-index: 4; pointer-events: none; transition: height 0.6s; }
     .bar.top { top: 0; } .bar.bottom { bottom: 0; }
     body.cinema .bar { height: calc((100vh - 100vw / 2.39) / 2); }
@@ -63,6 +67,7 @@
 <body class="intro">
   <canvas id="canvas" tabindex="0"></canvas>
   <div class="bar top"></div><div class="bar bottom"></div>
+  <div id="source" hidden><img alt=""><div class="cap"></div></div>
   <div id="hud">
     <div id="timer">0.00</div>
     <div id="rings">0 / 10</div>

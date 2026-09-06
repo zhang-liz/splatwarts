@@ -134,7 +134,7 @@ function setup(R) {
     const ground = measureFloor(splat, R);
     const p = world.pad ?? [0, (ground ?? -R * 0.3) + R * 0.05, R * 0.95];
     pad = makeDisc(0x66ccff, R * 0.1); pad.position.set(...p); stage.add(pad);
-    hintEl.textContent = "Mouse steer · W fly · Shift boost · Space stop · R restart · V voice spells · 1-6 spells · C photo · H cinema · Land on the blue pad to enter the castle";
+    hintEl.textContent = "Mouse steer · W fly · Shift boost · Space stop · R restart · V voice spells · 1-6 spells · C photo · H cinema · B source · Land on the blue pad to enter the castle";
   } else {
     walker.setScale(R, world.eye ?? 0);
     walker.reset({ position: [0, 0, R * 0.05], yaw: 0 });
@@ -147,7 +147,7 @@ function setup(R) {
     const d = world.door ?? [0, floor, R * 0.5];
     door = makeDisc(0xffaa33, R * 0.07); door.position.set(...d); stage.add(door);
     if (world.candles) candles = new Candles(stage, R, floor, world.eye ?? 0);
-    hintEl.textContent = "WASD walk · E talk · V voice spells on/off · 1 Lumos · 2 Incendio · 3 Patronum · 4 Expelliarmus · 5 Leviosa · 6 Reducto · 0 Nox · C photo · H cinema · Orange pad: broom";
+    hintEl.textContent = "WASD walk · E talk · V voice spells on/off · 1 Lumos · 2 Incendio · 3 Patronum · 4 Expelliarmus · 5 Leviosa · 6 Reducto · 0 Nox · C photo · H cinema · B source · Orange pad: broom";
   }
   spells.setScale(R, mode === "walk" ? ((world.eye ?? 0) - world.floorY) : null); spells.enabled = true; spells.nox();
   post.look(mode); lightFor(mode); music.ambience(world.ambience ?? null);
@@ -191,6 +191,13 @@ addEventListener("keydown", (e) => {
     photo.start(world.photoPrompt ?? world.name);
   }
   if (e.code === "KeyH") document.body.classList.toggle("cinema");
+  if (e.code === "KeyB" && world) {
+    const box = document.getElementById("source"); box.hidden = !box.hidden;
+    if (!box.hidden) {
+      box.querySelector("img").src = world.url.replace(/(-500k)?\.spz$/, "-ref.png");
+      box.querySelector(".cap").textContent = `Input: one panorama of the film set, enhanced with Seedream, then Marble 1.1 Plus made the 3D set you are standing in`;
+    }
+  }
   if (e.code === "KeyP") {
     const p = (mode === "fly" ? broom : walker).position;
     console.log(`pos: [${p.x.toFixed(2)}, ${p.y.toFixed(2)}, ${p.z.toFixed(2)}]  yaw ${(mode === "fly" ? broom : walker).yaw.toFixed(3)}`);
