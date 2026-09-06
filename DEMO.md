@@ -50,4 +50,4 @@ Walk through the orange door at the far end. Fade. Diagon Alley at night.
 - Talk box stuck: click the scene or the Walk away button.
 
 ## Keys
-Fly: mouse steer, W fly, Shift boost, Space stop, R restart. Walk: WASD, E talk, Esc leave. C photo anywhere. H cinema mode (no HUD, letterbox) for recording. [ and ] jump to the previous or next set (castle, hall, alley). Spells: V voice toggle, 1 Lumos, 2 Incendio, 3 Patronum, 4 Expelliarmus, 5 Leviosa, 6 Reducto, 0 Nox. P prints your position.
+Fly: mouse steer, W fly, Shift boost, Space stop, R restart. Walk: WASD, E talk, Esc leave. C photo anywhere. H cinema mode (no HUD, letterbox) for recording. Scene map bottom-left: press Esc to free the cursor, click a set to jump there. [ and ] also cycle the sets. Spells: V voice toggle, 1 Lumos, 2 Incendio, 3 Patronum, 4 Expelliarmus, 5 Leviosa, 6 Reducto, 0 Nox. P prints your position.

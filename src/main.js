@@ -77,8 +77,15 @@ function makeDisc(color, r) {
   return g;
 }
 
+for (const b of document.querySelectorAll("#map button")) b.addEventListener("click", (e) => {
+  e.stopPropagation(); if (switching || b.dataset.key === worldKey) return;
+  if (dialogue.open) { dialogue.close(); dialogue.onClose?.(); } if (photo.open) photo.close();
+  loadWorld(b.dataset.key);
+});
 async function loadWorld(key) {
-  worldKey = key; switching = true; spells.enabled = false; spells.listen(false);
+  worldKey = key; switching = true;
+  for (const b of document.querySelectorAll("#map button")) b.classList.toggle("on", b.dataset.key === key);
+  spells.enabled = false; spells.listen(false);
   fade.style.opacity = 1;
   await new Promise((r) => setTimeout(r, 650));
   // tear down
@@ -192,6 +199,7 @@ addEventListener("keydown", (e) => {
     photo.start(world.photoPrompt ?? world.name);
   }
   if (e.code === "KeyH") document.body.classList.toggle("cinema");
+  if (e.code === "KeyM") document.exitPointerLock?.();
   if ((e.code === "BracketRight" || e.code === "BracketLeft") && !switching && !dialogue.open && !photo.open) {
     const keys = ["castle4", "hall4", "alley2"]; const i = Math.max(0, keys.indexOf(worldKey));
     loadWorld(keys[(i + (e.code === "BracketRight" ? 1 : keys.length - 1)) % keys.length]);

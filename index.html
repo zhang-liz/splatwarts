@@ -52,7 +52,14 @@
     #title.gone { opacity: 0; }
     body.intro #msg, body.intro #hint { visibility: hidden; }
     /* Cinema mode (H): no HUD, 2.39:1 letterbox, for shooting the demo video */
-    body.cinema #hud, body.cinema #hint { display: none; }
+    body.cinema #hud, body.cinema #hint, body.cinema #map { display: none; }
+    /* Scene map: click a set to jump there. Esc frees the cursor first while flying or walking. */
+    #map { position: fixed; left: 20px; bottom: 64px; display: flex; gap: 8px; z-index: 6; }
+    #map button { position: relative; width: 132px; height: 66px; padding: 0; border: 2px solid rgba(243,230,196,0.35); border-radius: 6px; overflow: hidden; background: #000; cursor: pointer; opacity: 0.8; transition: opacity 0.2s, border-color 0.2s; }
+    #map button img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    #map button span { position: absolute; left: 0; right: 0; bottom: 0; padding: 3px 0; font: 12px Georgia, serif; color: #f3e6c4; background: rgba(0,0,0,0.55); }
+    #map button:hover, #map button.on { opacity: 1; border-color: #ffb84d; }
+    #map .tip { align-self: flex-end; font: 12px Georgia, serif; color: #f3e6c4; opacity: 0.7; text-shadow: 0 1px 4px #000; margin-left: 4px; }
     /* Source panel (B): the panorama this set was generated from, for the before/after beat */
     #source { position: fixed; top: 24px; right: 24px; width: 40vw; z-index: 6; pointer-events: none; color: #f3e6c4; font-size: 14px; text-shadow: 0 2px 6px #000; }
     #source img { width: 100%; display: block; border: 2px solid rgba(243,230,196,0.7); border-radius: 6px; box-shadow: 0 8px 30px rgba(0,0,0,0.6); }
@@ -67,6 +74,12 @@
 <body class="intro">
   <canvas id="canvas" tabindex="0"></canvas>
   <div class="bar top"></div><div class="bar bottom"></div>
+  <div id="map">
+    <button data-key="castle4"><img src="/worlds/thumbs/castle4.jpg" alt=""><span>Hogwarts</span></button>
+    <button data-key="hall4"><img src="/worlds/thumbs/hall4.jpg" alt=""><span>Great Hall</span></button>
+    <button data-key="alley2"><img src="/worlds/thumbs/alley2.jpg" alt=""><span>Diagon Alley</span></button>
+    <div class="tip">Esc frees the cursor</div>
+  </div>
   <div id="source" hidden><img alt=""><div class="cap"></div></div>
   <div id="hud">
     <div id="timer">0.00</div>
