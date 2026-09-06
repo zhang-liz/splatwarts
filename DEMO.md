@@ -39,7 +39,7 @@ Walk through the orange door at the far end. Fade. Diagon Alley at night.
 - Spark 2: splat rendering, depth of field, and the live splat edits behind Lumos and Reducto.
 - Three.js post: bloom, film grade, vignette.
 - Seedream via FAL: set cleanup, panorama enhancement, and the composite that puts a real person into the shot.
-- Tripo: broom, Patronus stag, and three characters as extras. Claude + ElevenLabs via FAL: the extras talk (press E). Stable Audio: music, ambience, spell sounds.
+- Tripo: broom, Patronus stag, and three characters (hidden by default; `?chars=1` shows them). Claude + ElevenLabs via FAL: the characters talk (press E) when shown. Stable Audio: music, ambience, spell sounds.
 
 ## 1:55 Close
 "Built today. Any set you can photograph, you can walk and shoot in. Go take a picture."

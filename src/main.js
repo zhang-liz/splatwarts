@@ -154,7 +154,7 @@ function setup(R) {
     const d = world.door ?? [0, floor, R * 0.5];
     door = makeDisc(0xffaa33, R * 0.07); door.position.set(...d); stage.add(door);
     if (world.candles) candles = new Candles(stage, R, floor, world.eye ?? 0);
-    hintEl.textContent = "WASD walk · E talk · V voice spells on/off · 1 Lumos · 2 Incendio · 3 Patronum · 4 Expelliarmus · 5 Leviosa · 6 Reducto · 0 Nox · C photo · H cinema · B source · [ ] scene · Orange pad: broom";
+    hintEl.textContent = "WASD walk · V voice spells on/off · 1 Lumos · 2 Incendio · 3 Patronum · 4 Expelliarmus · 5 Leviosa · 6 Reducto · 0 Nox · C photo · H cinema · B source · [ ] scene · Orange pad: broom";
   }
   spells.setScale(R, mode === "walk" ? ((world.eye ?? 0) - world.floorY) : null); spells.enabled = true; spells.nox();
   photo.camera = camera; photo.panoUrl = world.url.replace(/(-500k)?\.spz$/, "-ref.png");

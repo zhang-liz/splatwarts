@@ -148,8 +148,10 @@ export const WORLDS = {
   },
 };
 
-WORLDS.hall3.characters = WORLDS.hall.characters;
-WORLDS.hall4.characters = WORLDS.hall.characters;
+// The Tripo extras are off by default until they have a proper idle: ?chars=1 brings them back.
+const withChars = new URLSearchParams(location.search).has("chars");
+WORLDS.hall3.characters = withChars ? WORLDS.hall.characters : [];
+WORLDS.hall4.characters = withChars ? WORLDS.hall.characters : [];
 export const START = "castle4";
 
 // ?world=hall picks a world. ?r=20 overrides the radius. ?pad=x,y,z and ?door=x,y,z override spots.

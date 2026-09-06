@@ -61,6 +61,9 @@ Export a `.glb` from Tripo and save it as `public/models/broom.glb`. It loads au
 ## Keys in `.env`
 `worldlabs-api-key`, `fal-api-key`, `tripo-api-key`, `mint-api-key`. One per line, `name=value`. The dev server proxies `/api/llm` and `/api/tts` to FAL so keys never reach the browser.
 
+## Characters
+Harry, Hermione and Dumbledore (Tripo image-to-3D, Meshy rig) are hidden by default: they have no proper idle animation yet. Add `?chars=1` to the URL to show them and talk to them with E.
+
 ## Photo mode
 Press C in any world. Webcam preview (or "Upload a photo"), pick who stands with you (Harry, Hermione, Dumbledore, nobody), press Space. The current game frame (wand and 3D figures hidden), your photo, and a photoreal portrait of the companion (`public/characters/photo/`) go to Seedream edit through the dev-server proxy `/api/edit`; about ten seconds later you get a live-action film still of you in the scene. `?robes=1` dresses you in Hogwarts robes. `?flat=1` turns off the film look (bloom, grade, vignette). H toggles cinema mode: HUD off, 2.39:1 letterbox, for recording. The scene map at bottom-left jumps between the three sets (Esc frees the cursor first); [ and ] cycle them too. Photo mode composites onto the set's enhanced panorama, cropped at your current view, so the backdrop is photoreal; the live splat frame is the fallback. H toggles cinema mode: HUD off, 2.39:1 letterbox, for recording.
 
